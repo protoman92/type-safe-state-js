@@ -1,4 +1,4 @@
-https://travis-ci.org/protoman92/TypeSafeReduxState-JS.svg?branch=master
+[![Build Status](https://travis-ci.org/protoman92/TypeSafeReduxState-JS.svg?branch=master)](https://travis-ci.org/protoman92/TypeSafeReduxState-JS)
 
 # TypeSafeReduxState-JS
 Functional, type-safe Redux state.
