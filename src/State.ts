@@ -3,33 +3,33 @@ import {
   BuildableType,
   BuilderType,
   JSObject,
-  Maybe,
   Nullable,
+  Objects,
   Try,
 } from 'javascriptutilities';
 
 export let builder = (): Builder => new Builder();
+export let empty = (): Self => builder().build();
 export type UpdateFn<T> = (v: T) => T;
 export type Values = JSObject<Nullable<any>>;
-export type SubState = JSObject<Self>;
+export type Substate = JSObject<Self>;
 
 export interface Type {
   values: Values;
-  substate: SubState;
+  substate: Substate;
 }
 
 export class Self implements BuildableType<Builder>, Type {
-  public static empty = (): Self => builder().build();
   private _values: Values;
-  private _substate: SubState;
+  private _substate: Substate;
   private _substateSeparator: string;
 
   public get values(): Values {
-    return this._values;
+    return Object.assign({}, this._values);
   }
 
-  public get substate(): SubState {
-    return this._substate;
+  public get substate(): Substate {
+    return Object.assign({}, this._substate);
   }
 
   public get substateSeparator(): string {
@@ -71,11 +71,11 @@ export class Self implements BuildableType<Builder>, Type {
 
   /**
    * Set the current substates.
-   * @param {SubState} substate A SubState instance.
+   * @param {Substate} substate A Substate instance.
    * @param {*} setter Any object.
    * @returns {this} The current State instance.
    */
-  public setSubstate = (substate: SubState, setter: any): this => {
+  public setSubstates = (substate: Substate, setter: any): this => {
     if (this.canMutateValues(setter)) {
       this._substate = substate;
       return this;
@@ -100,45 +100,226 @@ export class Self implements BuildableType<Builder>, Type {
   }
 
   /**
-   * Get the substate at a particular node.
-   * @param {string} identifier A string value.
-   * @returns {Maybe<Self>} A Maybe Self instance.
+   * Update the current state values.
+   * @param {string} key A string value.
+   * @param {*} value Any object.
+   * @param {*} setter Any object.
+   * @returns {this} The current State instance.   
    */
-  public substateAtNode = (identifier: string): Maybe<Self> => {
+  public setValue = (key: string, value: any, setter: any): this => {
+    if (this.canMutateValues(setter)) {
+      this._values[key] = value;
+      return this;
+    } else {
+      throw Error('Cannot update values');
+    }
+  }
+
+  /**
+   * Remove some value from the current state.
+   * @param {string} key A string value.
+   * @param {*} setter Any object.
+   * @returns {this} The current State instance.   
+   */
+  public removeValue = (key: string, setter: any): this => {
+    if (this.canMutateValues(setter)) {
+      let oldValues = this._values;
+      let entries = Objects.entries(oldValues).filter(v => v[0] !== key);
+
+      this._values = entries.map(v => ({[v[0]]: v[1]}))
+        .reduce((v1, v2) => Object.assign({}, v1, v2), {});
+
+      return this;
+    } else {
+      throw Error('Cannot remove values');
+    }
+  }
+
+  /**
+   * Update the current substates. 
+   * @param {string} key A string value.
+   * @param {Self} ss A Self instance.
+   * @param {*} setter Any object.
+   * @returns {this} The current State instance.
+   */
+  public setSubstate = (key: string, ss: Self, setter: any): this => {
+    if (this.canMutateValues(setter)) {
+      this._substate[key] = ss;
+      return this;
+    } else {
+      throw Error('Cannot update substate');
+    }
+  }
+
+  /**
+   * Remove some substate from the current substates.
+   * @param {string} key A string value.
+   * @param {*} setter Any object.
+   * @returns {this} The current State instance.
+   */
+  public removeSubState = (key: string, setter: any): this => {
+    if (this.canMutateValues(setter)) {
+      let oldSS = this._substate;
+      let entries = Objects.entries(oldSS).filter(v => v[0] !== key);
+
+      this._substate = entries.map(v => ({[v[0]]: v[1]}))
+        .reduce((v1, v2) => Object.assign({}, v1, v2), {});
+
+      return this;
+    } else {
+      throw Error('Cannot remove substate');
+    }
+  }
+
+  /**
+   * Get the substate at a particular node.
+   * @param {string} id A string value.
+   * @param {string} original The original id.
+   * @returns {Try<Self>} A Try Self instance.
+   */
+  private _substateAtNode = (id: string, original: string): Try<Self> => {
     let separator = this.substateSeparator;
-    let separated = identifier.split(separator);
+    let separated = id.split(separator);
     let length = separated.length;
-    let first = Collections.first(separated).asMaybe();
+    let first = Collections.first(separated);
 
     if (length === 1) {
-      return first.flatMap(v => this.substateAtNode(v));
+      return first.map(v => Try.unwrap(this.substate[v]))
+        .flatMap(v => v.mapError(() => `No substate at ${original}`));
     } else {
-      return Try.unwrap(() => separated.slice(1, length).join(separator))
+      return Try.unwrap(() => separated.slice(1, length - 1).join(separator))
         .zipWith(first, (v1, v2): [string, string] => [v1, v2])
-        .map(v => this.substateAtNode(v[1]).map(v1 => v1.substateAtNode(v[0])))
-        .flatMap(v => v.flatMap(v1 => v1)).asMaybe();
+        .map(v => this._substateAtNode(v[1], original)
+          .map(v1 => v1._substateAtNode(v[0], original)))
+        .flatMap(v => v.flatMap(v1 => v1));
+    }
+  }
+
+  /**
+   * Get the substate at a particular node.
+   * @param {string} id A string value.   
+   * @returns {Try<Self>} A Try Self instance.
+   */
+  public substateAtNode = (id: string): Try<Self> => {
+    return this._substateAtNode(id, id);
+  }
+
+  /**
+   * Get the state value at a particular node.
+   * @param {string} id A string value.
+   * @param {string} original The original id.
+   * @returns {Try<any>} Try any object.
+   */
+  private _valueAtNode = (id: string, original: string): Try<any> => {
+    let separator = this.substateSeparator;
+    let separated = id.split(separator);
+    let length = separated.length;
+    let first = Collections.first(separated);
+
+    if (length === 1) {
+      return first.map(v => Try.unwrap(this.values[v]))
+        .flatMap(v => v.mapError(() => `No value found at ${original}`));
+    } else {
+      return Try.unwrap(() => separated.slice(1, length - 1).join(separator))
+        .zipWith(first, (v1, v2): [string, string] => [v1, v2])
+        .map(v => this._substateAtNode(v[1], original)
+          .map(v1 => v1._valueAtNode(v[0], original)))
+        .flatMap(v => v.flatMap(v1 => v1));
     }
   }
 
   /**
    * Get the state value at a particular node.
-   * @param {string} identifier A string value.
-   * @returns {Maybe<any>} Maybe any object.
+   * @param {string} id A string value.
+   * @returns {Try<any>} Try any object.
    */
-  public valueAtNode = (identifier: string): Maybe<any> => {
+  public valueAtNode = (id: string): Try<any> => {
+    return this._valueAtNode(id, id);
+  }
+
+  /**
+   * Map the value at some node to another value using a mapper function, and
+   * create whatever substate that is not present.
+   * @param {string} id A string value.
+   * @param {UpdateFn<Nullable<any>>} fn Selector function.
+   * @returns {Self} A State instance.
+   */
+  public mappingValue = (id: string, fn: UpdateFn<Nullable<any>>): Self => {
     let separator = this.substateSeparator;
-    let separated = identifier.split(separator);
+    let separated = id.split(separator);
     let length = separated.length;
-    let first = Collections.first(separated).asMaybe();
+    let first = Collections.first(separated);
 
     if (length === 1) {
-      return first.flatMap(v => Maybe.unwrap(this.values[v]));
+      return first.map(v => this.cloneBuilder()
+        .updateValueWithFunction(v, fn).build())
+        .getOrElse(this);
     } else {
-      return Try.unwrap(() => separated.slice(1, length).join(separator))
-        .zipWith(first, (v1, v2): [string, string] => [v1, v2])
-        .map(v => this.substateAtNode(v[1]).map(v1 => v1.valueAtNode(v[0])))
-        .flatMap(v => v.flatMap(v1 => v1)).asMaybe();
+      let subId = Try.unwrap(() => separated.slice(1, length - 1).join(separator));
+      let substate = first.flatMap(v => this.substateAtNode(v)).getOrElse(empty());
+
+      return first
+        .zipWith(subId.map(v => substate.mappingValue(v, fn)), (v1, v2) => {
+          return this.cloneBuilder().updateSubstate(v1, v2).build();
+        })
+        .getOrElse(this);
     }
+  }
+
+  /**
+   * Update the value at some node, ignoring the old value.
+   * @param {string} id A string value.
+   * @param {Nullable<any>} value Any object.
+   * @returns {Self} A State instance.
+   */
+  public updatingValue = (id: string, value: Nullable<any>): Self => {
+    let updateFn: UpdateFn<Nullable<any>> = () => value;
+    return this.mappingValue(id, updateFn);
+  }
+
+  /**
+   * Remove the value at some node.
+   * @param {string} id A string value.
+   * @returns {Self} A State instance.
+   */
+  public removingValue = (id: string): Self => {
+    return this.updatingValue(id, undefined);
+  }
+
+  /**
+   * Update the substate at some node with another substate, ignoring the old
+   * substate.
+   * @param {string} id A string value.
+   * @param {Nullable<Self>} ss A Self instance.
+   * @returns {Self} A State instance.
+   */
+  public updatingSubstate = (id: string, ss: Nullable<Self>): Self => {
+    let separator = this.substateSeparator;
+    let separated = id.split(separator);
+    let length = separated.length;
+    let first = Collections.first(separated);
+
+    if (length === 1) {
+      return first.map(v => this.cloneBuilder()
+        .updateSubstate(v, ss).build()).getOrElse(this);
+    } else {
+      let subId = Try.unwrap(() => separated.slice(1, length - 1).join(separator));
+
+      return first
+        .flatMap(v => Try.unwrap(this._substate[v]))
+        .zipWith(subId, (v1, v2) => v1.updatingSubstate(v2, ss))
+        .zipWith(first, (v1, v2) => this.updatingSubstate(v2, v1))
+        .getOrElse(this);
+    }
+  }
+
+  /**
+   * Remove the substate at some node.
+   * @param {string} id A string value.
+   * @returns {Self} A Self instance.
+   */
+  public removingSubstate = (id: string): Self => {
+    return this.updatingSubstate(id, undefined);
   }
 }
 
@@ -161,11 +342,11 @@ export class Builder implements BuilderType<Self> {
 
   /**
    * Replace the current substate.
-   * @param {SubState} substate A SubState instance.
+   * @param {Substate} substate A Substate instance.
    * @returns {this} The current Builder instance.
    */
-  public withSubState = (substate: SubState): this => {
-    this.state.setSubstate(substate, this);
+  public withSubstate = (substate: Substate): this => {
+    this.state.setSubstates(substate, this);
     return this;
   }
 
@@ -174,8 +355,53 @@ export class Builder implements BuilderType<Self> {
    * @param {string} separator A string value.
    * @returns {this} The current Builder instance.
    */
-  public withSubStateSeparator = (separator: string): this => {
+  public withSubstateSeparator = (separator: string): this => {
     this.state.setSubstateSeparator(separator, this);
+    return this;
+  }
+
+  /**
+   * Update the current state values with a mapping function.
+   * @param {string} id A string value.
+   * @param {UpdateFn<Nullable<any>>} fn Selector function.
+   * @returns {this} The current Builder instance.   
+   */
+  public updateValueWithFunction = (id: string, fn: UpdateFn<Nullable<any>>): this => {
+    let value = fn(this.state.valueAtNode(id).value);
+    
+    if (value !== undefined && value !== null) {
+      this.state.setValue(id, value, this);
+    } else {
+      this.state.removeValue(id, this);
+    }
+
+    return this;
+  }
+
+  /**
+   * Update the current state with some value, ignoring the old value.
+   * @param {string} id A string value.
+   * @param {Nullable<any>} value Any object.
+   * @returns {this} The current Builder instance.
+   */
+  public updateValue = (id: string, value: Nullable<any>): this => {
+    let updateFn: UpdateFn<Nullable<any>> = () => value;
+    return this.updateValueWithFunction(id, updateFn);
+  }
+
+  /**
+   * Update the current substates with some substate, ignoring the old substate.
+   * @param {string} id A string value.
+   * @param {Nullable<Self>} ss A Self instance.
+   * @returns {this} The current Builder instance.
+   */
+  public updateSubstate = (id: string, ss: Nullable<Self>): this => {
+    if (ss !== undefined && ss !== null) {
+      this.state.setSubstate(id, ss, this);
+    } else {
+      this.state.removeSubState(id, this);
+    }
+
     return this;
   }
 
@@ -188,8 +414,8 @@ export class Builder implements BuilderType<Self> {
     if (buildable !== undefined && buildable !== null) {
       return this
         .withValues(buildable.values)
-        .withSubState(buildable.substate)
-        .withSubStateSeparator(buildable.substateSeparator);
+        .withSubstate(buildable.substate)
+        .withSubstateSeparator(buildable.substateSeparator);
     } else {
       return this;
     }
