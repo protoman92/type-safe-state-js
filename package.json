@@ -1,0 +1,28 @@
+{
+  "name": "typesafereduxstate-js",
+  "version": "1.0.0",
+  "description": "Function, type-safe Redux state",
+  "main": "dist/index.js",
+  "scripts": {
+    "test": "jest"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/protoman92/TypeSafeReduxState-JS.git"
+  },
+  "author": "Hai Pham",
+  "license": "Apache-2.0",
+  "bugs": {
+    "url": "https://github.com/protoman92/TypeSafeReduxState-JS/issues"
+  },
+  "homepage": "https://github.com/protoman92/TypeSafeReduxState-JS#readme",
+  "dependencies": {
+    "javascriptutilities": "^1.2.6",
+    "rxjs": "^5.5.6"
+  },
+  "devDependencies": {
+    "@types/jest": "^21.1.6",
+    "jest": "^21.2.1",
+    "ts-jest": "^21.2.3"
+  }
+}

@@ -1,0 +1,9 @@
+{
+  "rules": {
+    "import-spacing": true,
+    "indent": true,
+    "jsdoc-format": true,
+    "no-invalid-this": true,
+    "semicolon": true
+  }
+}
