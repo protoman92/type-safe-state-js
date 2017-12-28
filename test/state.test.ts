@@ -94,4 +94,35 @@ describe('State should be implemented correctly', () => {
       }
     }
   });
+
+  it('Updating values at undefined substate - should create substate', () => {
+    /// Setup
+    let path = '1.2.3';
+    let value = 12345678;
+
+    /// When
+    let newState = initialState.updatingValue(path, value);
+
+    /// Then
+    expect(newState.valueAtNode(path).value).toBe(value);
+  });
+});
+
+describe('State should be immutable', () => {
+  let state = State.empty<any>()
+    .updatingValue('a', 1)
+    .updatingValue('a.b.c', 2)
+    .updatingValue('a.b.d', 3);
+
+  it('Non-builder mutating state - should fail', () => {
+    expect(() => state.setValue('a', 1, 1)).toThrow();
+  });
+
+  it('Setting values directly - should not mutate state', () => {
+    /// Setup & When
+    state.values['a'] = '2';
+
+    /// Then
+    expect(state.valueAtNode('a').value).not.toBe(2);
+  });
 });
