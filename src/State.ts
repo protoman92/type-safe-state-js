@@ -293,10 +293,10 @@ export class Self<T> implements BuildableType<Builder<T>>, Type<T> {
    * Map the value at some node to another value using a mapper function, and
    * create whatever substate that is not present.
    * @param {string} id A string value.
-   * @param {UpdateFn<Nullable<T>>} fn Selector function.
+   * @param {UpdateFn<Try<T>>} fn Selector function.
    * @returns {Self<T>} A State instance.
    */
-  public mappingValue = (id: string, fn: UpdateFn<Nullable<T>>): Self<T> => {
+  public mappingValue = (id: string, fn: UpdateFn<Try<T>>): Self<T> => {
     let separator = this.substateSeparator;
     let separated = id.split(separator);
     let length = separated.length;
@@ -325,7 +325,10 @@ export class Self<T> implements BuildableType<Builder<T>>, Type<T> {
    * @returns {Self} A State instance.
    */
   public updatingValue = (id: string, value: Nullable<T>): Self<T> => {
-    let updateFn: UpdateFn<Nullable<T>> = () => value;
+    let updateFn: UpdateFn<Try<T>> = () => {
+      return Try.unwrap(value, `No value found at ${id}`);
+    };
+
     return this.mappingValue(id, updateFn);
   }
 
@@ -543,11 +546,11 @@ export class Builder<T> implements BuilderType<Self<T>> {
   /**
    * Update the current state values with a mapping function.
    * @param {string} id A string value.
-   * @param {UpdateFn<Nullable<T>>} fn Selector function.
+   * @param {UpdateFn<Try<T>>} fn Selector function.
    * @returns {this} The current Builder instance.   
    */
-  public updateValueWithFunction = (id: string, fn: UpdateFn<Nullable<T>>): this => {
-    let value = fn(this.state.valueAtNode(id).value);
+  public updateValueWithFunction = (id: string, fn: UpdateFn<Try<T>>): this => {
+    let value = fn(this.state.valueAtNode(id)).value;
     
     if (value !== undefined && value !== null) {
       this.state.setValue(id, value, this);
@@ -565,7 +568,10 @@ export class Builder<T> implements BuilderType<Self<T>> {
    * @returns {this} The current Builder instance.
    */
   public updateValue = (id: string, value: Nullable<T>): this => {
-    let updateFn: UpdateFn<Nullable<T>> = () => value;
+    let updateFn: UpdateFn<Try<T>> = () => {
+      return Try.unwrap(value, `No value found at ${id}`);
+    };
+
     return this.updateValueWithFunction(id, updateFn);
   }
 

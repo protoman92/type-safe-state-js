@@ -1,4 +1,12 @@
-import { JSObject, Numbers, Objects, Booleans, Types } from 'javascriptutilities';
+import {
+  Collections,
+  JSObject,
+  Numbers,
+  Objects,
+  Booleans,
+  Types,
+} from 'javascriptutilities';
+
 import { State } from './../src';
 
 describe('State should be implemented correctly', () => {
@@ -127,6 +135,22 @@ describe('State should be implemented correctly', () => {
     if (!Types.isInstance<State.Type<number>>(flattened, keys)) {
       fail('Should have been of the same type');
     }
+  });
+
+  it('Mapping values - should work', () => {
+    /// Setup
+    let keys = Object.keys(allCombinations);
+    let key = Collections.randomElement(keys).getOrThrow();
+    let oldValue = initialState.valueAtNode(key).getOrElse(100);
+
+    /// When
+    let newState = initialState
+      .mappingValue(key, v => v.map(v1 => v1 * 2))
+      .mappingValue(key, v => v.map(v1 => v1 * 3))
+      .mappingValue(key, v => v.map(v1 => v1 * 4));
+
+    /// Then
+    expect(newState.valueAtNode(key).value).toBe(oldValue * 2 * 3 * 4);
   });
 });
 
