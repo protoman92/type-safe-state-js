@@ -1,3 +1,5 @@
+https://travis-ci.org/protoman92/TypeSafeReduxState-JS.svg?branch=master
+
 # TypeSafeReduxState-JS
 Functional, type-safe Redux state.
 
