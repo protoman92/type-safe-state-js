@@ -187,7 +187,7 @@ export class Self implements BuildableType<Builder>, Type {
       return first.map(v => Try.unwrap(this.substate[v]))
         .flatMap(v => v.mapError(() => `No substate at ${original}`));
     } else {
-      return Try.unwrap(() => separated.slice(1, length - 1).join(separator))
+      return Try.unwrap(() => separated.slice(1, length).join(separator))
         .zipWith(first, (v1, v2): [string, string] => [v1, v2])
         .map(v => this._substateAtNode(v[1], original)
           .map(v1 => v1._substateAtNode(v[0], original)))
@@ -220,7 +220,7 @@ export class Self implements BuildableType<Builder>, Type {
       return first.map(v => Try.unwrap(this.values[v]))
         .flatMap(v => v.mapError(() => `No value found at ${original}`));
     } else {
-      return Try.unwrap(() => separated.slice(1, length - 1).join(separator))
+      return Try.unwrap(() => separated.slice(1, length).join(separator))
         .zipWith(first, (v1, v2): [string, string] => [v1, v2])
         .map(v => this._substateAtNode(v[1], original)
           .map(v1 => v1._valueAtNode(v[0], original)))
@@ -255,7 +255,7 @@ export class Self implements BuildableType<Builder>, Type {
         .updateValueWithFunction(v, fn).build())
         .getOrElse(this);
     } else {
-      let subId = Try.unwrap(() => separated.slice(1, length - 1).join(separator));
+      let subId = Try.unwrap(() => separated.slice(1, length).join(separator));
       let substate = first.flatMap(v => this.substateAtNode(v)).getOrElse(empty());
 
       return first
@@ -275,6 +275,38 @@ export class Self implements BuildableType<Builder>, Type {
   public updatingValue = (id: string, value: Nullable<any>): Self => {
     let updateFn: UpdateFn<Nullable<any>> = () => value;
     return this.mappingValue(id, updateFn);
+  }
+
+  /**
+   * Update all values from some key-value object. 
+   * @param {JSObject<any>} values A JSObject instance.
+   * @returns {Self} A State instance.
+   */
+  public updatingKV = (values: JSObject<any>): Self => {
+    let entries = Objects.entries(values);
+
+    let updateKV = (state: Self, values: [string, any][]): Self => {
+      let length = values.length;
+
+      if (length === 0) {
+        return state;
+      } else {
+        let first = Collections.first(values);
+        let firstUpdated = first.map(v => state.updatingValue(v[0], v[1]));
+
+        if (length === 1) {
+          return firstUpdated.getOrElse(state);
+        } else {
+          let subValues = Try.unwrap(() => values.slice(1, length));
+
+          return firstUpdated
+            .zipWith(subValues, (v1, v2) => updateKV(v1, v2))
+            .getOrElse(state);
+        }
+      }
+    };
+
+    return updateKV(this, entries);
   }
 
   /**
@@ -303,7 +335,7 @@ export class Self implements BuildableType<Builder>, Type {
       return first.map(v => this.cloneBuilder()
         .updateSubstate(v, ss).build()).getOrElse(this);
     } else {
-      let subId = Try.unwrap(() => separated.slice(1, length - 1).join(separator));
+      let subId = Try.unwrap(() => separated.slice(1, length).join(separator));
 
       return first
         .flatMap(v => Try.unwrap(this._substate[v]))

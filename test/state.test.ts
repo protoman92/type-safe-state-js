@@ -1,13 +1,18 @@
 import { Observable } from 'rxjs';
-import { JSObject, Numbers } from 'javascriptutilities';
-// import { State } from './../src';
+import { JSObject, Numbers, Objects, Booleans } from 'javascriptutilities';
+import { State } from './../src';
 
 let timeout = 1000;
 
 describe('State should be implemented correctly', () => {
   let separator = '.';
-  let levels = ['a', 'b', 'c', 'd'];
+  let alphabets = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+  let levelCount = 7;
+  let levels = alphabets.split('').slice(0, levelCount);
   let countPerLevel = 2;
+  var allCombinations: JSObject<any>;
+  var allEntries: [string, any][];
+  var initialState: State.Self;
 
   let createNested = (levels: string[]): string[] => {
     let subLength = levels.length;
@@ -45,7 +50,11 @@ describe('State should be implemented correctly', () => {
     return allCombinations;
   };
 
-  let allCombinations = createCombinations(levels);
+  beforeEach(() => {
+    allCombinations = createCombinations(levels);
+    allEntries = Objects.entries(allCombinations);
+    initialState = State.empty().updatingKV(allCombinations);
+  });
 
   it('Create default state - should create correct number of values', done => {
     /// Setup
@@ -55,12 +64,42 @@ describe('State should be implemented correctly', () => {
     Observable.from(nestedState)
       .distinctUntilChanged((v1, v2) => v1 === v2)      
       .toArray()
-      .doOnNext(v => expect(v.length).toBe(levels.length ** countPerLevel))
+      .doOnNext(v => expect(v.length).toBe(countPerLevel ** levels.length))
       .doOnCompleted(() => done())
       .subscribe();
   }, timeout);
 
   it('Accessing value at node - should work correctly', () => {
-    
-  }); 
+    for (let entry of allEntries) {
+      let key = entry[0];
+      let value = entry[1];
+      let valueAtNode = initialState.valueAtNode(key).value;
+      expect(valueAtNode).toBe(value);
+    }
+  });
+
+  it('Updating value at node - should work correctly', () => {
+    for (let entry of allEntries) {
+      let key = entry[0];
+      let value = Booleans.random() ? Numbers.randomBetween(0, 1000) : undefined;
+      let newState = initialState.updatingValue(key, value);
+      let valueAtNode = newState.valueAtNode(key).value;
+      expect(valueAtNode).toBe(value);
+    }
+  });
+
+  it('Updating substate - should work correctly', () => {
+    for (let entry of allEntries) {
+      let key = entry[0];
+      let state = Booleans.random ? State.empty() : undefined;
+      let newState = initialState.updatingSubstate(key, state);
+      let stateAtNode = newState.substateAtNode(key).value;
+
+      if (stateAtNode === undefined || stateAtNode === null) {
+        expect(state).toBeFalsy();
+      } else if (state !== undefined && state !== null) {
+        expect(stateAtNode.values).toEqual(state.values);
+      }
+    }
+  });
 });
