@@ -6,19 +6,65 @@ import {
   Nullable,
   Objects,
   Try,
+  Types,
 } from 'javascriptutilities';
+
+export type UpdateFn<T> = (v: T) => T;
+export type Values<T> = JSObject<Nullable<T>>;
+export type Substate<T> = JSObject<Self<T>>;
+export let valuesKey = 'values';
+export let substateKey = 'substate';
 
 export function builder<T>(): Builder<T> {
   return new Builder();
 }
 
+/**
+ * Get an empty state.
+ * @template T Generics parameter.
+ * @returns {Self<T>} A Self instance.
+ */
 export function empty<T>(): Self<T> {
   return builder<T>().build();
 }
 
-export type UpdateFn<T> = (v: T) => T;
-export type Values<T> = JSObject<Nullable<T>>;
-export type Substate<T> = JSObject<Self<T>>;
+/**
+ * Build a state from another state.
+ * @template T Generics parameter.
+ * @param {Type<T>} state A Type instance.
+ * @returns {Self<T>} A Self instance.
+ */
+export function fromState<T>(state: Type<T>): Self<T> {
+  if (state instanceof Self) {
+    return state;
+  } else {
+    let substates = Objects.entries(state.substate)
+      .map(v => ({[v[0]] : Try.unwrap(v[1]).map(v1 => fromState(v1)).value}))
+      .reduce((v1, v2) => Object.assign({}, v1, v2), {});
+
+    return builder<T>().withValues(state.values).withSubstate(substates).build();
+  }
+}
+
+/**
+ * Build a state from a possible state.
+ * @template T Generics parameter.
+ * @param {JSObject<T>} state A JSObject instance.
+ * @returns {Self<T>} A Self instance.
+ */
+export function fromKeyValue(state: JSObject<any>): Self<any> {
+  if (Types.isInstance<Type<any>>(state, [valuesKey, substateKey])) {
+    return fromState(state);
+  } else {
+    let _values = state['_' + valuesKey];
+
+    let _substate = Objects.entries<any>(state['_' + substateKey])
+      .map(v => ({[v[0]] : Try.unwrap(v[1]).map(v1 => fromKeyValue(v1)).value}))
+      .reduce((v1, v2) => Object.assign({}, v1, v2), {});
+
+    return builder<any>().withValues(_values).withSubstate(_substate).build();
+  }
+}
 
 export interface Type<T> {
   values: Values<T>;
@@ -288,7 +334,7 @@ export class Self<T> implements BuildableType<Builder<T>>, Type<T> {
    * @param {JSObject<T>} values A JSObject instance.
    * @returns {Self<T>} A State instance.
    */
-  public updatingKV = (values: JSObject<T>): Self<T> => {
+  public updatingKeyValues = (values: JSObject<T>): Self<T> => {
     let entries = Objects.entries(values);
 
     let updateKV = (state: Self<T>, values: [string, Nullable<T>][]): Self<T> => {
@@ -358,6 +404,88 @@ export class Self<T> implements BuildableType<Builder<T>>, Type<T> {
    */
   public removingSubstate = (id: string): Self<T> => {
     return this.updatingSubstate(id, undefined);
+  }
+
+  /**
+   * Empty the current state.
+   * @returns {Self<T>} A Self instance.
+   */
+  public emptying = (): Self<T> => empty();
+
+  /**
+   * Flatten the current state to a key-value object. If we want a JSON of the
+   * current state, we should use this method instead of JSON.parse(JSON.stringify)
+   * because the key names will be different. (e.g. _values instead of values).
+   * @returns {JSObject<any>} A JSObject instance.
+   */
+  public flatten = (): JSObject<any> => {
+    let substates = Objects.entries(this._substate)
+      .map(v => ({[v[0]]: Try.unwrap(v[1]).map(v => v.flatten()).value}))
+      .reduce((v1, v2) => Object.assign({}, v1, v2), {});
+
+    return { [valuesKey]: this._values, [substateKey]: substates };
+  }
+
+  /**
+   * Check if the current state equals another state.
+   * @param {JSObject<any>} object A JSObject instance.
+   * @param {(v1: T, v2: T) => boolean} fn Compare function.
+   * @returns {boolean} A boolean value.
+   */
+  public equals = (object: JSObject<any>, fn: (v1: T, v2: T) => boolean): boolean => {
+    if (object !== undefined && object !== null) {
+      let state = fromKeyValue(object);
+      let thisValues = this._values;
+      let otherValues = state.values;
+      let thisSubstates = this._substate;
+      let otherSubstates = state.substate;
+
+      for (let key in thisValues) {
+        let v1 = thisValues[key];
+        let v2 = otherValues[key];
+        
+        try {
+          if (
+            v1 !== undefined && v1 !== null && 
+            v2 !== undefined && v2 !== null &&
+            fn(v1, v2)
+          ) {
+            continue;
+          } else if (v1 === undefined && v2 === undefined) {
+            continue;
+          } else if (v1 === null && v2 === null) {
+            continue;
+          } else {
+            return false;
+          }
+        } catch {
+          return false;
+        }
+      }
+
+      for (let key in thisSubstates) {
+        let v1 = thisSubstates[key];
+        let v2 = otherSubstates[key];
+        
+        if (
+          v1 !== undefined && v1 !== null &&
+          v2 !== undefined && v2 !== null &&
+          v1.equals(v2, fn)
+        ) {
+          continue;
+        } else if (v1 === undefined && v2 === undefined) {
+          continue;
+        } else if (v1 === null && v2 === null) {
+          continue;
+        } else {
+          return false;
+        }
+      }
+
+      return true;
+    } else {
+      return false;
+    }
   }
 }
 

@@ -1,10 +1,10 @@
-import { JSObject, Numbers, Objects, Booleans } from 'javascriptutilities';
+import { JSObject, Numbers, Objects, Booleans, Types } from 'javascriptutilities';
 import { State } from './../src';
 
 describe('State should be implemented correctly', () => {
   let separator = '.';
   let alphabets = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
-  let levelCount = 7;
+  let levelCount = 8;
   let levels = alphabets.split('').slice(0, levelCount);
   let countPerLevel = 2;
   var allCombinations: JSObject<any>;
@@ -50,7 +50,7 @@ describe('State should be implemented correctly', () => {
   beforeEach(() => {
     allCombinations = createCombinations(levels);
     allEntries = Objects.entries(allCombinations);
-    initialState = State.empty<number>().updatingKV(allCombinations);
+    initialState = State.empty<number>().updatingKeyValues(allCombinations);
   });
 
   it('Create default state - should create correct number of values', () => {
@@ -105,6 +105,28 @@ describe('State should be implemented correctly', () => {
 
     /// Then
     expect(newState.valueAtNode(path).value).toBe(value);
+  });
+
+  it('Substate equals - should work correctly', () => {
+    /// Setup
+    let flattened1 = <State.Type<number>>(initialState.flatten());
+    let flattened2 = JSON.parse(JSON.stringify(initialState));
+    let compareFn: (v1: number, v2: number) => boolean = (v1, v2) => v1 === v2;
+    
+    /// When & Then
+    expect(initialState.equals(flattened1, compareFn)).toBeTruthy();
+    expect(initialState.equals(flattened2, compareFn)).toBeTruthy();
+  });
+
+  it('Flatten state - should work', () => {
+    /// Setup
+    let flattened = initialState.flatten();
+    let keys = [State.valuesKey, State.substateKey];
+
+    /// When & Then
+    if (!Types.isInstance<State.Type<number>>(flattened, keys)) {
+      fail('Should have been of the same type');
+    }
   });
 });
 
