@@ -1,7 +1,7 @@
 {
   "name": "typesafereduxstate-js",
   "version": "1.0.0",
-  "description": "Function, type-safe Redux state",
+  "description": "Functional, type-safe Redux state",
   "main": "dist/index.js",
   "scripts": {
     "test": "jest"
@@ -17,8 +17,7 @@
   },
   "homepage": "https://github.com/protoman92/TypeSafeReduxState-JS#readme",
   "dependencies": {
-    "javascriptutilities": "^1.2.6",
-    "rxjs": "^5.5.6"
+    "javascriptutilities": "^1.2.6"
   },
   "devDependencies": {
     "@types/jest": "^21.1.6",

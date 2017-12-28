@@ -1,8 +1,5 @@
-import { Observable } from 'rxjs';
 import { JSObject, Numbers, Objects, Booleans } from 'javascriptutilities';
 import { State } from './../src';
-
-let timeout = 1000;
 
 describe('State should be implemented correctly', () => {
   let separator = '.';
@@ -12,7 +9,7 @@ describe('State should be implemented correctly', () => {
   let countPerLevel = 2;
   var allCombinations: JSObject<any>;
   var allEntries: [string, any][];
-  var initialState: State.Self;
+  var initialState: State.Self<number>;
 
   let createNested = (levels: string[]): string[] => {
     let subLength = levels.length;
@@ -53,21 +50,16 @@ describe('State should be implemented correctly', () => {
   beforeEach(() => {
     allCombinations = createCombinations(levels);
     allEntries = Objects.entries(allCombinations);
-    initialState = State.empty().updatingKV(allCombinations);
+    initialState = State.empty<number>().updatingKV(allCombinations);
   });
 
-  it('Create default state - should create correct number of values', done => {
+  it('Create default state - should create correct number of values', () => {
     /// Setup
     let nestedState = createNested(levels);
 
-    /// When
-    Observable.from(nestedState)
-      .distinctUntilChanged((v1, v2) => v1 === v2)      
-      .toArray()
-      .doOnNext(v => expect(v.length).toBe(countPerLevel ** levels.length))
-      .doOnCompleted(() => done())
-      .subscribe();
-  }, timeout);
+    /// When & Then
+    expect(nestedState.length).toBe(countPerLevel ** levels.length);
+  });
 
   it('Accessing value at node - should work correctly', () => {
     for (let entry of allEntries) {
@@ -91,7 +83,7 @@ describe('State should be implemented correctly', () => {
   it('Updating substate - should work correctly', () => {
     for (let entry of allEntries) {
       let key = entry[0];
-      let state = Booleans.random ? State.empty() : undefined;
+      let state = Booleans.random ? State.empty<number>() : undefined;
       let newState = initialState.updatingSubstate(key, state);
       let stateAtNode = newState.substateAtNode(key).value;
 
