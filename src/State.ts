@@ -52,22 +52,22 @@ export class Self<T> implements BuildableType<Builder<T>>, Type<T> {
   public cloneBuilder = (): Builder<T> => this.builder().withBuildable(this);
 
   /**
-   * Check whether a setter can mutate the current state's values.
-   * @param {*} setter Any object.
+   * Check whether a builder can mutate the current state's values.
+   * @param {Builder<T>} builder The builder that owns this state.
    * @returns {boolean} A boolean value.
    */
-  private canMutateValues = (setter: any): boolean => {
-    return setter instanceof Builder;
+  private canMutateValues = (builder: Builder<T>): boolean => {
+    return builder.hasSameState(this) && !builder.hasBuilt;
   }
 
   /**
    * Set the current state values.
    * @param {Values<T>} values A Values instance.
-   * @param {*} setter Any object.
+   * @param {Builder<T>} builder The builder that owns this state.
    * @returns {this} The current State instance.
    */
-  public setValues = (values: Values<T>, setter: any): this => {
-    if (this.canMutateValues(setter)) {
+  public setValues = (values: Values<T>, builder: Builder<T>): this => {
+    if (this.canMutateValues(builder)) {
       this._values = values;
       return this;
     } else {
@@ -78,11 +78,11 @@ export class Self<T> implements BuildableType<Builder<T>>, Type<T> {
   /**
    * Set the current substates.
    * @param {Substate<T>} substate A Substate instance.
-   * @param {*} setter Any object.
+   * @param {Builder<T>} builder The builder that owns this state.
    * @returns {this} The current State instance.
    */
-  public setSubstates = (substate: Substate<T>, setter: any): this => {
-    if (this.canMutateValues(setter)) {
+  public setSubstates = (substate: Substate<T>, builder: Builder<T>): this => {
+    if (this.canMutateValues(builder)) {
       this._substate = substate;
       return this;
     } else {
@@ -93,11 +93,11 @@ export class Self<T> implements BuildableType<Builder<T>>, Type<T> {
   /**
    * Set the substate separator.   
    * @param {string} separator A string value.
-   * @param {*} setter Any object.
+   * @param {Builder<T>} builder The builder that owns this state.
    * @returns {this} The current State instance.
    */
-  public setSubstateSeparator = (separator: string, setter: any): this => {
-    if (this.canMutateValues(setter)) {
+  public setSubstateSeparator = (separator: string, builder: Builder<T>): this => {
+    if (this.canMutateValues(builder)) {
       this._substateSeparator = separator;
       return this;
     } else {
@@ -109,11 +109,11 @@ export class Self<T> implements BuildableType<Builder<T>>, Type<T> {
    * Update the current state values.
    * @param {string} key A string value.
    * @param {T} value T object.
-   * @param {*} setter Any object.
+   * @param {Builder<T>} builder The builder that owns this state.
    * @returns {this} The current State instance.   
    */
-  public setValue = (key: string, value: T, setter: any): this => {
-    if (this.canMutateValues(setter)) {
+  public setValue = (key: string, value: T, builder: Builder<T>): this => {
+    if (this.canMutateValues(builder)) {
       this._values[key] = value;
       return this;
     } else {
@@ -124,11 +124,11 @@ export class Self<T> implements BuildableType<Builder<T>>, Type<T> {
   /**
    * Remove some value from the current state.
    * @param {string} key A string value.
-   * @param {*} setter Any object.
+   * @param {Builder<T>} builder The builder that owns this state.
    * @returns {this} The current State instance.   
    */
-  public removeValue = (key: string, setter: any): this => {
-    if (this.canMutateValues(setter)) {
+  public removeValue = (key: string, builder: Builder<T>): this => {
+    if (this.canMutateValues(builder)) {
       let oldValues = this._values;
       let entries = Objects.entries(oldValues).filter(v => v[0] !== key);
 
@@ -145,11 +145,11 @@ export class Self<T> implements BuildableType<Builder<T>>, Type<T> {
    * Update the current substates. 
    * @param {string} key A string value.
    * @param {Self<T>} ss A Self instance.
-   * @param {*} setter Any object.
+   * @param {Builder<T>} builder The builder that owns this state.
    * @returns {this} The current State instance.
    */
-  public setSubstate = (key: string, ss: Self<T>, setter: any): this => {
-    if (this.canMutateValues(setter)) {
+  public setSubstate = (key: string, ss: Self<T>, builder: Builder<T>): this => {
+    if (this.canMutateValues(builder)) {
       this._substate[key] = ss;
       return this;
     } else {
@@ -160,11 +160,11 @@ export class Self<T> implements BuildableType<Builder<T>>, Type<T> {
   /**
    * Remove some substate from the current substates.
    * @param {string} key A string value.
-   * @param {*} setter Any object.
+   * @param {Builder<T>} builder The builder that owns this state.
    * @returns {this} The current State instance.
    */
-  public removeSubState = (key: string, setter: any): this => {
-    if (this.canMutateValues(setter)) {
+  public removeSubState = (key: string, builder: Builder<T>): this => {
+    if (this.canMutateValues(builder)) {
       let oldSS = this._substate;
       let entries = Objects.entries(oldSS).filter(v => v[0] !== key);
 
@@ -363,9 +363,23 @@ export class Self<T> implements BuildableType<Builder<T>>, Type<T> {
 
 export class Builder<T> implements BuilderType<Self<T>> {
   private state: Self<T>;
+  private _hasBuilt: boolean;
+
+  public get hasBuilt(): boolean {
+    return this._hasBuilt;
+  }
 
   public constructor() {
     this.state = new Self();
+  }
+
+  /**
+   * Check if the current Builder has a particular state. 
+   * @param {Self} state A Self instance.
+   * @returns {boolean} A boolean value.
+   */
+  public hasSameState(state: Self<T>): boolean {
+    return this.state === state;
   }
 
   /**
@@ -458,6 +472,14 @@ export class Builder<T> implements BuilderType<Self<T>> {
       return this;
     }
   }
-
-  public build = (): Self<T> => this.state;
+ 
+  /**
+   * Return the inner State and set _hasBuilt to true to prevent the current
+   * Builder from being used to mutate the built State.
+   * @returns {Self<T>} A Self instance.
+   */
+  public build = (): Self<T> => {
+    this._hasBuilt = true;
+    return this.state;
+  }
 }

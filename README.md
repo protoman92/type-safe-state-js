@@ -34,7 +34,7 @@ The State object will update the value at that node, and if necessary create new
 This State is useful for Redux reducers because you will not need to check for existence of property keys before updating value at a node. A reducer can be as such:
 
 ```typescript
-function reduce(state: State, action: Action): State {
+function reduce(state: State.Self<any>, action: Action): State.Self<any> {
   return state
     .updatingValue('auth.login.username', action.username)
     .updatingValue('auth.login.password', action.password)

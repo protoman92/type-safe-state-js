@@ -114,8 +114,15 @@ describe('State should be immutable', () => {
     .updatingValue('a.b.c', 2)
     .updatingValue('a.b.d', 3);
 
-  it('Non-builder mutating state - should fail', () => {
-    expect(() => state.setValue('a', 1, 1)).toThrow();
+  it('Non-owning builder mutating state - should fail', () => {
+    /// Setup
+    let altBuilder = State.builder();
+    let altState = altBuilder.build();
+    let anyBuilder = State.builder<number>();
+
+    /// When & Then
+    expect(() => state.setValue('a', 1, anyBuilder)).toThrow();
+    expect(() => altState.setValue('a', 1, altBuilder)).toThrow();
   });
 
   it('Setting values directly - should not mutate state', () => {
