@@ -73,8 +73,20 @@ describe('State should be implemented correctly', () => {
     for (let entry of allEntries) {
       let key = entry[0];
       let value = entry[1];
-      let valueAtNode = initialState.valueAtNode(key).value;
-      expect(valueAtNode).toBe(value);
+      let valueAtNode = initialState.valueAtNode(key);
+      expect(valueAtNode.value).toBe(value);
+    }
+  });
+
+  it('Accessing undefined value at node - should work correctly', () => {
+    for (let entry of allEntries) {
+      let key = entry[0] + '.shouldNotExist';
+      let valueAtNode = initialState.valueAtNode(key);
+      let booleanAtNode = initialState.booleanAtNode(entry[0]);
+      let stringAtNode = initialState.stringAtNode(entry[0]);
+      expect(valueAtNode.isSuccess()).toBeFalsy();
+      expect(booleanAtNode.isSuccess()).toBeFalsy();
+      expect(stringAtNode.isSuccess()).toBeFalsy();
     }
   });
 
@@ -151,6 +163,20 @@ describe('State should be implemented correctly', () => {
 
     /// Then
     expect(newState.valueAtNode(key).value).toBe(oldValue * 2 * 3 * 4);
+  });
+});
+
+describe('State\'s instanceAtNode should be implemented correctly', () => {
+  let state = State.empty<State.Self<string>>()
+    .updatingValue('1.2.3', State.empty<string>())
+    .updatingValue('1.2.3.4', State.empty());
+
+  it('instanceAtNode should be implemented correctly', () => {
+    /// Setup
+    let instance = state.instanceAtNode(State.Self, '1.2.3');
+
+    /// When & Then
+    expect(instance.isSuccess()).toBeTruthy();
   });
 });
 

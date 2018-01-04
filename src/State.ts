@@ -291,6 +291,72 @@ export class Self<T> implements BuildableType<Builder<T>>, Type<T> {
   }
 
   /**
+   * Convenience method to get a string from a node.
+   * @param {string} id A string value.
+   * @returns {Try<string>} A Try string instance.
+   */
+  public stringAtNode = (id: string): Try<string> => {
+    return this.valueAtNode(id)
+      .map(v => {
+        if (typeof(v) === 'string') {
+          return v;
+        } else {
+          throw Error(`No string at ${id}`);
+        }
+      });
+  } 
+
+  /**
+   * Convenience method to get a number from a node.
+   * @param {string} id A string value.
+   * @returns {Try<number>} A Try number instance.
+   */
+  public numberAtNode = (id: string): Try<number> => {
+    return this.valueAtNode(id)
+      .map(v => {
+        if (typeof(v) === 'number') {
+          return v;
+        } else {
+          throw Error(`No number at ${id}`);
+        }
+      });
+  }
+
+  /**
+   * Convenience method to get a boolean from a node.
+   * @param {string} id A string value.
+   * @returns {Try<boolean>} A Try boolean instance. 
+   */
+  public booleanAtNode = (id: string): Try<boolean> => {
+    return this.valueAtNode(id)
+      .map(v => {
+        if (typeof(v) === 'boolean') {
+          return v;
+        } else {
+          throw Error(`No boolean at ${id}`);
+        }
+      });
+  }
+
+  /**
+   * Convenience method to get R from a node.
+   * @template R Generics parameter.
+   * @param {new () => R} ctor R constructor.
+   * @param {string} id A string value.
+   * @returns {Try<R>} A Try R instance.
+   */
+  public instanceAtNode<R>(ctor: new () => R, id: string): Try<R> {
+    return this.valueAtNode(id)
+      .map(v => {
+        if (v instanceof ctor) {
+          return v;
+        } else {
+          throw Error(`No ${ctor.name} at ${id}`);
+        }
+      });
+  }
+
+  /**
    * Map the value at some node to another value using a mapper function, and
    * create whatever substate that is not present.
    * @param {string} id A string value.
