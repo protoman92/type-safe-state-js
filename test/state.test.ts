@@ -61,6 +61,27 @@ describe('State should be implemented correctly', () => {
     initialState = State.empty<number>().updatingKeyValues(allCombinations);
   });
 
+  it('Separate path into substate and value paths - should work', () => {
+    /// Setup
+    let sp = '.';
+    let path1 = 'should.be.correct';
+    let path2 = 'should';
+    let path3 = '';
+
+    /// When
+    let separated1 = State.separateSubstateAndValuePaths(path1, sp);
+    let separated2 = State.separateSubstateAndValuePaths(path2, sp);
+    let separated3 = State.separateSubstateAndValuePaths(path3, sp);
+
+    /// Then
+    expect(separated1[0]).not.toHaveLength(0);
+    expect(separated1[1]).not.toHaveLength(0);
+    expect(separated2[0]).toHaveLength(0);
+    expect(separated2[1]).not.toHaveLength(0);
+    expect(separated3[0]).toHaveLength(0);
+    expect(separated3[1]).toHaveLength(0);
+  });
+
   it('Create default state - should create correct number of values', () => {
     /// Setup
     let nestedState = createNested(levels);

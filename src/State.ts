@@ -16,6 +16,19 @@ export type Substate<T> = JSObject<Self<T>>;
 export let valuesKey = 'values';
 export let substateKey = 'substate';
 
+/**
+ * Separate a full path into substate and value components.
+ * @param {string} path A string value.
+ * @param {string} sp A string value.
+ * @returns {[string, string]} A string/string tuple.
+ */
+export let separateSubstateAndValuePaths = (path: string, sp: string): [string, string] => {
+  let separated = path.split(sp);
+  let last = Collections.last(separated);
+  let rest = separated.slice(0, separated.length - 1).join(sp);
+  return last.map((v): [string, string] => [rest, v]).getOrElse(['', '']);
+};
+
 export function builder<T>(): Builder<T> {
   return new Builder();
 }
