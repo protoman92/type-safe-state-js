@@ -1,6 +1,6 @@
 {
   "name": "typesafereduxstate-js",
-  "version": "1.0.6",
+  "version": "1.0.7",
   "description": "Functional, type-safe Redux state",
   "main": "./dist/src/index.js",
   "types": "./dist/src/index.d.ts",

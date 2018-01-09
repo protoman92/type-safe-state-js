@@ -3,6 +3,7 @@ import {
   BuildableType,
   BuilderType,
   JSObject,
+  Maybe,
   Nullable,
   Objects,
   Try,
@@ -13,6 +14,14 @@ import {
 export type UpdateFn<T> = (v: Try<T>) => TryResult<T>;
 export type Values<T> = JSObject<Nullable<T>>;
 export type Substate<T> = JSObject<Self<T>>;
+
+export type ForEach<T> = (
+  k: string,
+  value: Nullable<T>,
+  substatePath: string,
+  level: number,
+) => void;
+
 export let valuesKey = 'values';
 export let substateKey = 'substate';
 
@@ -507,6 +516,53 @@ export class Self<T> implements BuildableType<Builder<T>>, Type<T> {
       .reduce((v1, v2) => Object.assign({}, v1, v2), {});
 
     return { [valuesKey]: this._values, [substateKey]: substates };
+  }
+
+  /**
+   * Get the level count, i.e. how nested the deepest substate is.
+   * @returns {number} A number value.
+   */
+  public levelCount = (): number => {
+    return Try.success(Objects.entries(this._substate))
+      .map(v => v.map(v1 => v1[1]))
+      .map(v => Collections.flatMap(v))
+      .filter(v => v.length > 0, 'Empty substates')
+      .map(v => v.map(v1 => v1.levelCount()))
+      .flatMap(v => Try.unwrap(Math.max(...v)))
+      .getOrElse(0) + 1;
+  }
+
+  /**
+   * Convenience method to traverse the current state and perform some side
+   * effects.
+   * @param {ForEach<T>} selector Selector instance.
+   * @param {Maybe<string>} ssPath Maybe substate path string.
+   * @param {Nullable<number>} current Nullable current level.   
+   */
+  private _forEach = (selector: ForEach<T>, ssPath: Maybe<string>, current: Nullable<number>): void => {
+    let separator = this.substateSeparator;
+    let valueEntries = Objects.entries(this.values);
+    let substateEntries = Objects.entries(this.substate);
+    let level = current || 0;
+    valueEntries.forEach(v => selector(v[0], v[1], ssPath.getOrElse(''), level));
+    
+    Try.success(substateEntries)
+      .map(v => v.map(v1 => {
+        return Try.unwrap(v1[1]).map((v2): [string, Self<T>] => [v1[0], v2]);
+      }))
+      .map(v => Collections.flatMap(v))
+      .map(v => v.forEach(v1 => {
+        let path = ssPath.map(v1 => v1 + separator).getOrElse('') + v1[0];
+        v1[1]._forEach(selector, Maybe.some(path), level + 1);
+      }));
+  }
+
+  /**
+   * Traverse through the state tree and perform some side-effects.
+   * @param {ForEach<T>} selector Selector function.
+   */
+  public forEach = (selector: ForEach<T>): void => {
+    this._forEach(selector, Maybe.nothing(), undefined);
   }
 
   /**

@@ -13,7 +13,7 @@ describe('State should be implemented correctly', () => {
   let separator = '.';
   let alphabets = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
   let levelCount = 8;
-  let levels = alphabets.split('').slice(0, levelCount);
+  let levelLetters = alphabets.split('').slice(0, levelCount);
   let countPerLevel = 2;
   var allCombinations: JSObject<any>;
   var allEntries: [string, any][];
@@ -56,7 +56,7 @@ describe('State should be implemented correctly', () => {
   };
 
   beforeEach(() => {
-    allCombinations = createCombinations(levels);
+    allCombinations = createCombinations(levelLetters);
     allEntries = Objects.entries(allCombinations);
     initialState = State.empty<number>().updatingKeyValues(allCombinations);
   });
@@ -84,10 +84,10 @@ describe('State should be implemented correctly', () => {
 
   it('Create default state - should create correct number of values', () => {
     /// Setup
-    let nestedState = createNested(levels);
+    let nestedState = createNested(levelLetters);
 
     /// When & Then
-    expect(nestedState.length).toBe(countPerLevel ** levels.length);
+    expect(nestedState.length).toBe(countPerLevel ** levelLetters.length);
   });
 
   it('Accessing value at node - should work correctly', () => {
@@ -138,14 +138,18 @@ describe('State should be implemented correctly', () => {
 
   it('Updating values at undefined substate - should create substate', () => {
     /// Setup
-    let path = '1.2.3';
-    let value = 12345678;
+    let times = 10;
 
     /// When
-    let newState = initialState.updatingValue(path, value);
+    for (let i of Numbers.range(1, times)) {
+      let levels = alphabets.split('').slice(0, i);
+      let combinations = createCombinations(levels);
+      let state = State.empty<number>().updatingKeyValues(combinations);
+      let levelCount = state.levelCount();
 
-    /// Then
-    expect(newState.valueAtNode(path).value).toBe(value);
+      /// Then
+      expect(levelCount).toBe(levels.length);
+    }
   });
 
   it('Substate equals - should work correctly', () => {
@@ -184,6 +188,31 @@ describe('State should be implemented correctly', () => {
 
     /// Then
     expect(newState.valueAtNode(key).value).toBe(oldValue * 2 * 3 * 4);
+  });
+
+  it('State level count should be implemented correctly', () => {
+    /// Setup
+    let levelCount = initialState.levelCount();
+
+    /// When & Then
+    expect(levelCount).toBe(levelLetters.length);
+  });
+
+  it('State for each should work', () => {
+    /// Setup
+    var levels: number[] = [];
+    var paths: string[] = [];
+    
+    /// When
+    initialState.forEach((_k, _v, p, l) => {
+      paths.push(p);
+      levels.push(l);
+    });
+
+    /// Then
+    let levelCount = Collections.unique(levels).length;
+    expect(levelCount).toBe(levelLetters.length);
+    expect(paths.length).toBe(allEntries.length);
   });
 });
 
