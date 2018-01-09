@@ -9,54 +9,65 @@ import {
 
 import { State } from './../src';
 
-describe('State should be implemented correctly', () => {
-  let separator = '.';
-  let alphabets = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
-  let levelCount = 8;
-  let levelLetters = alphabets.split('').slice(0, levelCount);
+let alphabets = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+let separator = '.';
+
+let createLevels = (levelCount: number): string[] => {
+  return alphabets.split('').slice(0, levelCount);
+};
+
+let createNested = (levels: string[], countPerLevel: number): string[] => {
+  let subLength = levels.length;
+  let last = levels[subLength - 1];
+  
+  if (subLength === 1) {
+    return Numbers.range(0, countPerLevel).map(v => '' + last + v);
+  } else {
+    let subNested = createNested(levels.slice(0, subLength - 1), countPerLevel);
+    let lastNested = createNested([last], countPerLevel);
+
+    return subNested
+      .map(v => lastNested.map(v1 => v + separator + v1))
+      .reduce((a, b) => a.concat(b), []);
+  }
+};
+
+let createCombinations = (levels: string[], countPerLevel: number): JSObject<any> => {
+  var allCombinations: JSObject<any> = {};
+  let nestedKeys = createNested(levels, countPerLevel);
+  
+  for (let key of nestedKeys) {
+    let keyParts = key.split(separator);
+    let keyLength = keyParts.length;
+
+    let subKeys = Numbers
+      .range(0, keyLength)
+      .map(v => keyParts.slice(0, v + 1))
+      .map(v => v.join(separator));
+    
+    subKeys.forEach(v => allCombinations[v] = Numbers.randomBetween(0, 1000));
+  }
+
+  return allCombinations;
+};
+
+let createState = (levels: string[], countPerLevel: number): State.Self<number> => {
+  let combinations = createCombinations(levels, countPerLevel);
+  return State.empty<number>().updatingKeyValues(combinations);
+};
+
+describe('State should be implemented correctly - fixed tests', () => {
+  let levelCount: number;
+  let levelLetters: string[];
   let countPerLevel = 2;
   var allCombinations: JSObject<any>;
   var allEntries: [string, any][];
   var initialState: State.Self<number>;
 
-  let createNested = (levels: string[]): string[] => {
-    let subLength = levels.length;
-    let last = levels[subLength - 1];
-    
-    if (subLength === 1) {
-      return Numbers.range(0, countPerLevel).map(v => '' + last + v);
-    } else {
-      let subNested = createNested(levels.slice(0, subLength - 1));
-      let lastNested = createNested([last]);
-
-      return subNested
-        .map(v => lastNested.map(v1 => v + separator + v1))
-        .reduce((a, b) => a.concat(b), []);
-    }
-  };
-
-  // var initialState: State.Type = { values: {}, substate: {} };
-  let createCombinations = (levels: string[]): JSObject<any> => {
-    var allCombinations: JSObject<any> = {};
-    let nestedKeys = createNested(levels);
-    
-    for (let key of nestedKeys) {
-      let keyParts = key.split(separator);
-      let keyLength = keyParts.length;
-
-      let subKeys = Numbers
-        .range(0, keyLength)
-        .map(v => keyParts.slice(0, v + 1))
-        .map(v => v.join(separator));
-      
-      subKeys.forEach(v => allCombinations[v] = Numbers.randomBetween(0, 1000));
-    }
-
-    return allCombinations;
-  };
-
   beforeEach(() => {
-    allCombinations = createCombinations(levelLetters);
+    levelCount = 8;
+    levelLetters = createLevels(levelCount);
+    allCombinations = createCombinations(levelLetters, countPerLevel);
     allEntries = Objects.entries(allCombinations);
     initialState = State.empty<number>().updatingKeyValues(allCombinations);
   });
@@ -84,7 +95,7 @@ describe('State should be implemented correctly', () => {
 
   it('Create default state - should create correct number of values', () => {
     /// Setup
-    let nestedState = createNested(levelLetters);
+    let nestedState = createNested(levelLetters, countPerLevel);
 
     /// When & Then
     expect(nestedState.length).toBe(countPerLevel ** levelLetters.length);
@@ -143,7 +154,7 @@ describe('State should be implemented correctly', () => {
     /// When
     for (let i of Numbers.range(1, times)) {
       let levels = alphabets.split('').slice(0, i);
-      let combinations = createCombinations(levels);
+      let combinations = createCombinations(levels, countPerLevel);
       let state = State.empty<number>().updatingKeyValues(combinations);
       let levelCount = state.levelCount();
 
@@ -189,30 +200,47 @@ describe('State should be implemented correctly', () => {
     /// Then
     expect(newState.valueAtNode(key).value).toBe(oldValue * 2 * 3 * 4);
   });
+});
+
+describe('State should be implemented correctly - variable tests', () => {
+  let countPerLevel = 3;
+  let maxLevel = 6;
 
   it('State level count should be implemented correctly', () => {
-    /// Setup
-    let levelCount = initialState.levelCount();
+    for (let i of Numbers.range(1, maxLevel)) {
+      /// Setup
+      let levels = createLevels(i);
+      let state = createState(levels, countPerLevel);
+      
+      /// When
+      let levelCount = state.levelCount();
 
-    /// When & Then
-    expect(levelCount).toBe(levelLetters.length);
+      /// Then
+      expect(levelCount).toBe(levels.length);
+    }
   });
 
   it('State for each should work', () => {
     /// Setup
-    var levels: number[] = [];
-    var paths: string[] = [];
-    
-    /// When
-    initialState.forEach((_k, _v, p, l) => {
-      paths.push(p);
-      levels.push(l);
-    });
+    for (let i of Numbers.range(1, maxLevel)) {
+      let levels = createLevels(i);
+      let combinations = createCombinations(levels, countPerLevel);
+      let allEntries = Objects.entries(combinations);
+      let state = createState(levels, countPerLevel);
+      var levelNumbers: number[] = [];
+      var paths: string[] = [];
+      
+      /// When
+      state.forEach((_k, _v, p, l) => {
+        paths.push(p);
+        levelNumbers.push(l);
+      });
 
-    /// Then
-    let levelCount = Collections.unique(levels).length;
-    expect(levelCount).toBe(levelLetters.length);
-    expect(paths.length).toBe(allEntries.length);
+      /// Then
+      let levelCount = Collections.unique(levelNumbers).length;
+      expect(levelCount).toBe(levels.length);
+      expect(paths.length).toBe(allEntries.length);
+    }
   });
 });
 
