@@ -2,8 +2,7 @@ import {
   Collections,
   BuildableType,
   BuilderType,
-  JSObject,
-  Maybe,
+  JSObject,  
   Nullable,
   Objects,
   Try,
@@ -19,7 +18,7 @@ export type MapFn<T,R> = (value: T) => R;
 export type ForEach<T> = (
   k: string,
   value: Try<T>,
-  substatePath: string,
+  substatePath: Try<string>,
   level: number,
 ) => void;
 
@@ -104,8 +103,16 @@ export class Self<T> implements BuildableType<Builder<T>>, Type<T> {
     return Object.assign({}, this._values);
   }
 
+  public get valueKeys(): string[] {
+    return Object.keys(this._values);
+  }
+
   public get substate(): Substate<T> {
     return Object.assign({}, this._substate);
+  }
+
+  public get substateKeys(): string[] {
+    return Object.keys(this._substate);
   }
 
   public get substateSeparator(): string {
@@ -248,6 +255,30 @@ export class Self<T> implements BuildableType<Builder<T>>, Type<T> {
   }
 
   /**
+   * Check if the current state has values.
+   * @returns {boolean} A boolean value.
+   */
+  public hasValues = (): boolean => {
+    return Objects.entries(this._values).length > 0;
+  }
+
+  /**
+   * Check if the current state has substates.
+   * @returns {boolean} A boolean value.
+   */
+  public hasSubstate = (): boolean => {
+    return Objects.entries(this._substate).length > 0;
+  }
+
+  /**
+   * Check if the current state is empty.
+   * @returns {boolean} A boolean value.
+   */
+  public isEmpty = (): boolean => {
+    return this.hasValues() && this.hasSubstate();
+  }
+
+  /**
    * Get the substate at a particular node.
    * @param {string} id A string value.
    * @param {string} original The original id.
@@ -319,14 +350,13 @@ export class Self<T> implements BuildableType<Builder<T>>, Type<T> {
    * @returns {Try<string>} A Try string instance.
    */
   public stringAtNode = (id: string): Try<string> => {
-    return this.valueAtNode(id)
-      .map(v => {
-        if (typeof(v) === 'string') {
-          return v;
-        } else {
-          throw Error(`No string at ${id}`);
-        }
-      });
+    return this.valueAtNode(id).map(v => {
+      if (typeof(v) === 'string') {
+        return v;
+      } else {
+        throw Error(`No string at ${id}`);
+      }
+    });
   } 
 
   /**
@@ -335,14 +365,13 @@ export class Self<T> implements BuildableType<Builder<T>>, Type<T> {
    * @returns {Try<number>} A Try number instance.
    */
   public numberAtNode = (id: string): Try<number> => {
-    return this.valueAtNode(id)
-      .map(v => {
-        if (typeof(v) === 'number') {
-          return v;
-        } else {
-          throw Error(`No number at ${id}`);
-        }
-      });
+    return this.valueAtNode(id).map(v => {
+      if (typeof(v) === 'number') {
+        return v;
+      } else {
+        throw Error(`No number at ${id}`);
+      }
+    });
   }
 
   /**
@@ -351,14 +380,13 @@ export class Self<T> implements BuildableType<Builder<T>>, Type<T> {
    * @returns {Try<boolean>} A Try boolean instance. 
    */
   public booleanAtNode = (id: string): Try<boolean> => {
-    return this.valueAtNode(id)
-      .map(v => {
-        if (typeof(v) === 'boolean') {
-          return v;
-        } else {
-          throw Error(`No boolean at ${id}`);
-        }
-      });
+    return this.valueAtNode(id).map(v => {
+      if (typeof(v) === 'boolean') {
+        return v;
+      } else {
+        throw Error(`No boolean at ${id}`);
+      }
+    });
   }
 
   /**
@@ -369,14 +397,13 @@ export class Self<T> implements BuildableType<Builder<T>>, Type<T> {
    * @returns {Try<R>} A Try R instance.
    */
   public instanceAtNode<R>(ctor: new () => R, id: string): Try<R> {
-    return this.valueAtNode(id)
-      .map(v => {
-        if (v instanceof ctor) {
-          return v;
-        } else {
-          throw Error(`No ${ctor.name} at ${id}`);
-        }
-      });
+    return this.valueAtNode(id).map(v => {
+      if (v instanceof ctor) {
+        return v;
+      } else {
+        throw Error(`No ${ctor.name} at ${id}`);
+      }
+    });
   }
 
   /**
@@ -428,30 +455,13 @@ export class Self<T> implements BuildableType<Builder<T>>, Type<T> {
    * @returns {Self<T>} A State instance.
    */
   public updatingKeyValues = (values: JSObject<T>): Self<T> => {
-    let entries = Objects.entries(values);
+    var state = empty<T>();
+    
+    Objects.entries(values).forEach((v) => {
+      state = state.updatingValue(v[0], v[1]);
+    });
 
-    let updateKV = (state: Self<T>, values: [string, Nullable<T>][]): Self<T> => {
-      let length = values.length;
-
-      if (length === 0) {
-        return state;
-      } else {
-        let first = Collections.first(values);
-        let firstUpdated = first.map(v => state.updatingValue(v[0], v[1]));
-
-        if (length === 1) {
-          return firstUpdated.getOrElse(state);
-        } else {
-          let subValues = Try.unwrap(() => values.slice(1, length));
-
-          return firstUpdated
-            .zipWith(subValues, (v1, v2) => updateKV(v1, v2))
-            .getOrElse(state);
-        }
-      }
-    };
-
-    return updateKV(this, entries);
+    return state;
   }
 
   /**
@@ -489,6 +499,10 @@ export class Self<T> implements BuildableType<Builder<T>>, Type<T> {
         .getOrElse(this);
     }
   }
+
+  // public updatingSubstates = (substates: [string, Nullable<Self<T>>][]): Self<T> => {
+
+  // }
 
   /**
    * Remove the substate at some node.
@@ -534,13 +548,30 @@ export class Self<T> implements BuildableType<Builder<T>>, Type<T> {
   }
 
   /**
+   * Get the total value count.
+   * @returns {number} A number value.
+   */
+  public totalValueCount(): number {
+    let valueCount = Objects.entries(this._values).length;
+
+    let ssValueCount = Try.success(Objects.entries(this._substate))
+      .map(v => v.map(v1 => v1[1]))
+      .map(v => Collections.flatMap(v))
+      .map(v => v.map(v1 => v1.totalValueCount()))
+      .map(v => v.reduce((v1, v2) => v1 + v2))
+      .getOrElse(0);
+
+    return valueCount + ssValueCount;
+  }
+
+  /**
    * Convenience method to traverse the current state and perform some side
    * effects.
    * @param {ForEach<T>} selector Selector instance.
    * @param {Maybe<string>} ssPath Maybe substate path string.
    * @param {Nullable<number>} current Nullable current level.   
    */
-  private _forEach = (selector: ForEach<T>, ssPath: Maybe<string>, current: Nullable<number>): void => {
+  private _forEach = (selector: ForEach<T>, ssPath: Try<string>, current: Nullable<number>): void => {
     let separator = this.substateSeparator;
     let valueEntries = Objects.entries(this.values);
     let substateEntries = Objects.entries(this.substate);
@@ -548,7 +579,7 @@ export class Self<T> implements BuildableType<Builder<T>>, Type<T> {
     
     valueEntries.forEach(v => {
       let value = Try.unwrap(v[1], `No value for key ${v[0]}`);
-      selector(v[0], value, ssPath.getOrElse(''), level);
+      selector(v[0], value, ssPath, level);
     });
     
     Try.success(substateEntries)
@@ -558,7 +589,7 @@ export class Self<T> implements BuildableType<Builder<T>>, Type<T> {
       .map(v => Collections.flatMap(v))
       .map(v => v.forEach(v1 => {
         let path = ssPath.map(v1 => v1 + separator).getOrElse('') + v1[0];
-        v1[1]._forEach(selector, Maybe.some(path), level + 1);
+        v1[1]._forEach(selector, Try.success(path), level + 1);
       }));
   }
 
@@ -567,7 +598,7 @@ export class Self<T> implements BuildableType<Builder<T>>, Type<T> {
    * @param {ForEach<T>} selector Selector function.
    */
   public forEach = (selector: ForEach<T>): void => {
-    this._forEach(selector, Maybe.nothing(), undefined);
+    this._forEach(selector, Try.failure('No substate path for top state'), undefined);
   }
 
   /**
@@ -582,12 +613,75 @@ export class Self<T> implements BuildableType<Builder<T>>, Type<T> {
     this.forEach((k, v, ss, _l) => {
       try {
         let newValue = v.map(v1 => selector(v1));
-        let fullPath = (ss.length === 0 ? '' : ss + separator) + k;
+        let fullPath = ss.map(v1 => v1 + separator).getOrElse('') + k;
         state = state.updatingValue(fullPath, newValue.value);
       } catch {}
     });
 
     return state;
+  }
+
+  /**
+   * Produce branches of the current state - each branch should contain at most
+   * one substate. In essence, the branch's substate object will be a single
+   * key-value object. A branch may look as follows:
+   *  |
+   *  | values: { a1, b1, c1 }
+   *  |
+   *  | values: { a2, b2, c2 }
+   *  |
+   *  | values: { a3, b3, c3 }
+   *  |
+   * @param {string} ssKey The current substate key. This is the key that
+   * identifies a substate in this._substates.
+   * @returns {[string, Self<T>][]} An Array of state.
+   */
+  private _createSingleBranches = (ssKey: Nullable<string>): [string, Self<T>][] => {
+    let substateBranches = Try.success(Objects.entries(this._substate))
+      .map(v => v.map(v1 => {
+        return Try.unwrap(v1[1]).map((v2): [string, Self<T>] => [v1[0], v2]);
+      }))
+      .map(v => Collections.flatMap(v))
+      .filter(v => v.length > 0, 'No substate found')
+      .map(v => v.map((v1): [string, Self<T>][] => { 
+        let branches = v1[1]._createSingleBranches(v1[0]);
+
+        if (branches.length > 0) {
+          return branches.map((v2): [string, Self<T>] => {
+            return [v1[0], empty<T>().updatingSubstate(v2[0], v2[1])];
+          });
+        } else {
+          return [v1];
+        }
+      }))
+      .map(v => v.reduce((v1, v2) => v1.concat(v2)));
+
+    /// If substateKey is defined and not null, and the Try is a failure Try
+    /// (indicating that the current substate has no substate), we must have
+    /// reached the deep end of the tree.
+    ///
+    /// On the other hand, if the current state has no substate, we still need
+    /// to return something even if no recursion is performed.
+    ///
+    /// For these cases, simply return the current state along with its substate 
+    /// key.
+    if ((ssKey !== undefined && ssKey !== null) || !this.hasSubstate())  { 
+      return substateBranches.getOrElse([[ssKey || '', this]]);
+    } else {
+      /// If the substateKey is undefined or null, we are on the uppermost level.
+      return substateBranches.getOrElse([])
+        .map(v => empty<T>().updatingSubstate(v[0], v[1]))
+        .map((v): [string, Self<T>] => ['', v]);
+    }
+  }
+
+  /**
+   * Produce branches of the current state - each branch should contain at most
+   * one substate.
+   * @returns {Self<T>[]} An Array of state.
+   */
+  public createSingleBranches = (): Self<T>[] => {
+    return this._createSingleBranches(undefined).map(v => v[1]);
   }
 
   /**

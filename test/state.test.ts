@@ -4,6 +4,7 @@ import {
   Numbers,
   Objects,
   Booleans,
+  Try,
   Types,
 } from 'javascriptutilities';
 
@@ -44,8 +45,8 @@ let createCombinations = (levels: string[], countPerLevel: number): JSObject<any
       .range(0, keyLength)
       .map(v => keyParts.slice(0, v + 1))
       .map(v => v.join(separator));
-    
-    subKeys.forEach(v => allCombinations[v] = Numbers.randomBetween(0, 1000));
+
+    subKeys.forEach(v => allCombinations[v] = Numbers.randomBetween(0, 100000));
   }
 
   return allCombinations;
@@ -204,7 +205,22 @@ describe('State should be implemented correctly - fixed tests', () => {
 
 describe('State should be implemented correctly - variable tests', () => {
   let countPerLevel = 3;
-  let maxLevel = 7;
+  let maxLevel = 8;
+
+  it('State total value count should be implemented correctly', () => {
+    for (let i of Numbers.range(1, maxLevel)) {
+      /// Setup
+      let levels = createLevels(i);
+      let allCombinations = createCombinations(levels, countPerLevel);
+      let state = createState(levels, countPerLevel);
+      
+      /// When
+      let valueCount = state.totalValueCount();
+
+      /// Then
+      expect(Objects.entries(allCombinations).length).toBe(valueCount);
+    }
+  });
 
   it('State level count should be implemented correctly', () => {
     for (let i of Numbers.range(1, maxLevel)) {
@@ -235,15 +251,15 @@ describe('State should be implemented correctly - variable tests', () => {
       let allEntries = Objects.entries(combinations);
       let state = createState(levels, countPerLevel);
       var levelNumbers: number[] = [];
-      var paths: string[] = [];
+      var paths: Try<string>[] = [];
       var values: number[] = [];
       var newValues: number[] = [];
       let mapFn = Collections.randomElement(mappingFns).getOrThrow();
       let newState = state.mappingForEach(mapFn);
       
       /// When
-      state.forEach((_k, v, p, l) => {
-        paths.push(p);
+      state.forEach((_k, v, ss, l) => {
+        paths.push(ss);
         levelNumbers.push(l);
         values.push(v.getOrThrow());
       });
@@ -255,6 +271,34 @@ describe('State should be implemented correctly - variable tests', () => {
       expect(levelCount).toBe(levels.length);
       expect(paths.length).toBe(allEntries.length);
       expect(values.map(mapFn)).toEqual(newValues);
+    }
+  });
+
+  it('State branching out - should work', () => {
+    for (let i of Numbers.range(1, maxLevel)) {
+      /// Setup
+      let levels = createLevels(i);
+      let state = createState(levels, countPerLevel);
+      let separator = state.substateSeparator;
+
+      /// When
+      let branches = state.createSingleBranches();
+
+      /// Then
+      branches.forEach(v => {
+        var branchLevels: number[] = [];
+
+        v.forEach((k, v, ss, l) => {
+          branchLevels.push(l);
+          let fullPath = ss.map(v1 => v1 + separator).getOrElse('') + k;
+          let valueAtPath = state.valueAtNode(fullPath);
+          expect(valueAtPath.value).toBe(v.value);
+        });
+        
+        expect(Math.max(...branchLevels) + 1).toBe(v.levelCount());
+      });
+
+      expect(branches.length).toBe(countPerLevel ** (i - 1));
     }
   });
 });
