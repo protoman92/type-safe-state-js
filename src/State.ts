@@ -14,10 +14,11 @@ import {
 export type UpdateFn<T> = (v: Try<T>) => TryResult<T>;
 export type Values<T> = JSObject<Nullable<T>>;
 export type Substate<T> = JSObject<Self<T>>;
+export type MapFn<T,R> = (value: T) => R;
 
 export type ForEach<T> = (
   k: string,
-  value: Nullable<T>,
+  value: Try<T>,
   substatePath: string,
   level: number,
 ) => void;
@@ -544,7 +545,11 @@ export class Self<T> implements BuildableType<Builder<T>>, Type<T> {
     let valueEntries = Objects.entries(this.values);
     let substateEntries = Objects.entries(this.substate);
     let level = current || 0;
-    valueEntries.forEach(v => selector(v[0], v[1], ssPath.getOrElse(''), level));
+    
+    valueEntries.forEach(v => {
+      let value = Try.unwrap(v[1], `No value for key ${v[0]}`);
+      selector(v[0], value, ssPath.getOrElse(''), level);
+    });
     
     Try.success(substateEntries)
       .map(v => v.map(v1 => {
@@ -563,6 +568,26 @@ export class Self<T> implements BuildableType<Builder<T>>, Type<T> {
    */
   public forEach = (selector: ForEach<T>): void => {
     this._forEach(selector, Maybe.nothing(), undefined);
+  }
+
+  /**
+   * Map all values in the current state to a different type.
+   * @param {MapFn<T,R>} selector Selector function.
+   * @returns {Self<R>} A Self instance.
+   */
+  public mappingForEach<R>(selector: MapFn<T,R>): Self<R> {
+    let separator = this.substateSeparator;
+    var state = empty<R>();
+
+    this.forEach((k, v, ss, _l) => {
+      try {
+        let newValue = v.map(v1 => selector(v1));
+        let fullPath = (ss.length === 0 ? '' : ss + separator) + k;
+        state = state.updatingValue(fullPath, newValue.value);
+      } catch {}
+    });
+
+    return state;
   }
 
   /**

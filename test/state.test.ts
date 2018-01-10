@@ -204,7 +204,7 @@ describe('State should be implemented correctly - fixed tests', () => {
 
 describe('State should be implemented correctly - variable tests', () => {
   let countPerLevel = 3;
-  let maxLevel = 6;
+  let maxLevel = 7;
 
   it('State level count should be implemented correctly', () => {
     for (let i of Numbers.range(1, maxLevel)) {
@@ -220,8 +220,15 @@ describe('State should be implemented correctly - variable tests', () => {
     }
   });
 
-  it('State for each should work', () => {
+  it('State for each/map for each should work', () => {
     /// Setup
+    let mappingFns: ((v: number) => number)[] = [
+      v => v * 10 + 15,
+      v => v * 7 - 4,
+      v => v + 15,
+      v => v - 30,
+    ];
+
     for (let i of Numbers.range(1, maxLevel)) {
       let levels = createLevels(i);
       let combinations = createCombinations(levels, countPerLevel);
@@ -229,17 +236,25 @@ describe('State should be implemented correctly - variable tests', () => {
       let state = createState(levels, countPerLevel);
       var levelNumbers: number[] = [];
       var paths: string[] = [];
+      var values: number[] = [];
+      var newValues: number[] = [];
+      let mapFn = Collections.randomElement(mappingFns).getOrThrow();
+      let newState = state.mappingForEach(mapFn);
       
       /// When
-      state.forEach((_k, _v, p, l) => {
+      state.forEach((_k, v, p, l) => {
         paths.push(p);
         levelNumbers.push(l);
+        values.push(v.getOrThrow());
       });
+
+      newState.forEach((_k, v) => newValues.push(v.getOrThrow()));
 
       /// Then
       let levelCount = Collections.unique(levelNumbers).length;
       expect(levelCount).toBe(levels.length);
       expect(paths.length).toBe(allEntries.length);
+      expect(values.map(mapFn)).toEqual(newValues);
     }
   });
 });
