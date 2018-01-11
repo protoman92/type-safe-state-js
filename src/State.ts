@@ -279,6 +279,28 @@ export class Self<T> implements BuildableType<Builder<T>>, Type<T> {
   }
 
   /**
+   * Get the first value in the values object.
+   * @returns {Try<T>} A Try T instance.
+   */
+  public firstValue = (): Try<T> => {
+    return Collections
+      .first(Objects.entries(this._values))
+      .map(v => v[0])
+      .flatMap(v => this.valueAtNode(v));
+  }
+
+  /**
+   * Get the first substate in the substate object.
+   * @returns {Try<Self<T>>} A Try Self instance.
+   */
+  public firstSubstate = (): Try<Self<T>> => {
+    return Collections
+      .first(Objects.entries(this._substate))
+      .map(v => v[0])
+      .flatMap(v => this.substateAtNode(v));
+  }
+
+  /**
    * Get the substate at a particular node.
    * @param {string} id A string value.
    * @param {string} original The original id.
@@ -455,7 +477,7 @@ export class Self<T> implements BuildableType<Builder<T>>, Type<T> {
    * @returns {Self<T>} A State instance.
    */
   public updatingKeyValues = (values: JSObject<T>): Self<T> => {
-    var state = empty<T>();
+    var state = this.cloneBuilder().build();
     
     Objects.entries(values).forEach((v) => {
       state = state.updatingValue(v[0], v[1]);
