@@ -181,7 +181,7 @@ describe('State should be implemented correctly - fixed tests', () => {
     let keys = [State.valuesKey, State.substateKey];
 
     /// When & Then
-    if (!Types.isInstance<State.Type<number>>(flattened, keys)) {
+    if (!Types.isInstance<State.Type<number>>(flattened, ...keys)) {
       fail('Should have been of the same type');
     }
   });

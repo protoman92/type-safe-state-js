@@ -11,7 +11,7 @@ import {
 } from 'javascriptutilities';
 
 export type UpdateFn<T> = (v: Try<T>) => TryResult<T>;
-export type Values<T> = JSObject<Nullable<T>>;
+export type Values<T> = JSObject<T>;
 export type Substate<T> = JSObject<Self<T>>;
 export type MapFn<T,R> = (value: T) => R;
 
@@ -62,7 +62,7 @@ export function fromState<T>(state: Type<T>): Self<T> {
     return state;
   } else {
     let substates = Objects.entries(state.substate)
-      .map(v => ({[v[0]] : Try.unwrap(v[1]).map(v1 => fromState(v1)).value}))
+      .map(v => ({[v[0]] : fromState(v[1])}))
       .reduce((v1, v2) => Object.assign({}, v1, v2), {});
 
     return builder<T>().withValues(state.values).withSubstate(substates).build();
@@ -76,13 +76,13 @@ export function fromState<T>(state: Type<T>): Self<T> {
  * @returns {Self<T>} A Self instance.
  */
 export function fromKeyValue(state: JSObject<any>): Self<any> {
-  if (Types.isInstance<Type<any>>(state, [valuesKey, substateKey])) {
+  if (Types.isInstance<Type<any>>(state, valuesKey, substateKey)) {
     return fromState(state);
   } else {
     let _values = state['_' + valuesKey];
 
     let _substate = Objects.entries<any>(state['_' + substateKey])
-      .map(v => ({[v[0]] : Try.unwrap(v[1]).map(v1 => fromKeyValue(v1)).value}))
+      .map(v => ({[v[0]] : fromKeyValue(v[1])}))
       .reduce((v1, v2) => Object.assign({}, v1, v2), {});
 
     return builder<any>().withValues(_values).withSubstate(_substate).build();
