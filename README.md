@@ -1,6 +1,8 @@
 # TypeSafeReduxState-JS
 
+[![npm version](https://badge.fury.io/js/typesafereduxstate-js.svg)](https://badge.fury.io/js/typesafereduxstate-js)
 [![Build Status](https://travis-ci.org/protoman92/TypeSafeReduxState-JS.svg?branch=master)](https://travis-ci.org/protoman92/TypeSafeReduxState-JS)
+[![Coverage Status](https://coveralls.io/repos/github/protoman92/TypeSafeReduxState-JS/badge.svg?branch=master)](https://coveralls.io/github/protoman92/TypeSafeReduxState-JS?branch=master)
 
 Functional, type-safe Redux state.
 
