@@ -8,7 +8,8 @@
   "scripts": {
     "setup": "npm install",
     "build": "tsc",
-    "test": "tsc && jest"
+    "test": "tsc && jest --coverage",
+    "coveralls": "cat ./coverage/lcov.info | coveralls"
   },
   "repository": {
     "type": "git",
@@ -25,6 +26,7 @@
   },
   "devDependencies": {
     "@types/jest": "^21.1.6",
+    "coveralls": "^3.0.0",
     "jest": "^21.2.1",
     "ts-jest": "^21.2.3"
   }
