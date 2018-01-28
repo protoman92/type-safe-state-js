@@ -201,6 +201,15 @@ describe('State should be implemented correctly - fixed tests', () => {
     /// Then
     expect(newState.valueAtNode(key).value).toBe(oldValue * 2 * 3 * 4);
   });
+
+  it('Accessing substate/value with empty id - should work correctly', () => {
+    /// Setup
+    let state = State.empty();
+
+    /// When & Then
+    expect(state.substateAtNode('').isSuccess()).toBeTruthy();
+    expect(state.valueAtNode('').isFailure()).toBeTruthy();
+  });
 });
 
 describe('State should be implemented correctly - variable tests', () => {

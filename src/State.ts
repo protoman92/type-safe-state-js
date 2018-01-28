@@ -313,7 +313,10 @@ export class Self<T> implements BuildableType<Builder<T>>, Type<T> {
     let first = Collections.first(separated);
 
     if (length === 1) {
-      return first.map(v => Try.unwrap(this.substate[v]))
+      /// If the id is an empty string, return the current state.
+      return first
+        .map(v => v.length === 0 ? this : Try.unwrap(this.substate[v]))
+        .map(v => Try.unwrap(v))
         .flatMap(v => v.mapError(() => `No substate at ${original}`));
     } else {
       return Try.unwrap(() => separated.slice(1, length).join(separator))
