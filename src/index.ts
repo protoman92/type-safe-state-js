@@ -1,2 +1,3 @@
 import * as State from './State';
-export { State };
+import { StateType } from './State';
+export { State, StateType };

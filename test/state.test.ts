@@ -20,7 +20,7 @@ let createLevels = (levelCount: number): string[] => {
 let createNested = (levels: string[], countPerLevel: number): string[] => {
   let subLength = levels.length;
   let last = levels[subLength - 1];
-  
+
   if (subLength === 1) {
     return Numbers.range(0, countPerLevel).map(v => '' + last + v);
   } else {
@@ -34,9 +34,9 @@ let createNested = (levels: string[], countPerLevel: number): string[] => {
 };
 
 let createCombinations = (levels: string[], countPerLevel: number): JSObject<any> => {
-  var allCombinations: JSObject<any> = {};
+  let allCombinations: JSObject<any> = {};
   let nestedKeys = createNested(levels, countPerLevel);
-  
+
   for (let key of nestedKeys) {
     let keyParts = key.split(separator);
     let keyLength = keyParts.length;
@@ -61,9 +61,9 @@ describe('State should be implemented correctly - fixed tests', () => {
   let levelCount: number;
   let levelLetters: string[];
   let countPerLevel = 2;
-  var allCombinations: JSObject<any>;
-  var allEntries: [string, any][];
-  var initialState: State.Self<number>;
+  let allCombinations: JSObject<any>;
+  let allEntries: [string, any][];
+  let initialState: State.Self<number>;
 
   beforeEach(() => {
     levelCount = 8;
@@ -157,10 +157,10 @@ describe('State should be implemented correctly - fixed tests', () => {
       let levels = alphabets.split('').slice(0, i);
       let combinations = createCombinations(levels, countPerLevel);
       let state = State.empty<number>().updatingKeyValues(combinations);
-      let levelCount = state.levelCount();
+      let lvCount = state.levelCount();
 
       /// Then
-      expect(levelCount).toBe(levels.length);
+      expect(lvCount).toBe(levels.length);
     }
   });
 
@@ -169,7 +169,7 @@ describe('State should be implemented correctly - fixed tests', () => {
     let flattened1 = <State.Type<number>>(initialState.flatten());
     let flattened2 = JSON.parse(JSON.stringify(initialState));
     let compareFn: (v1: number, v2: number) => boolean = (v1, v2) => v1 === v2;
-    
+
     /// When & Then
     expect(initialState.equals(flattened1, compareFn)).toBeTruthy();
     expect(initialState.equals(flattened2, compareFn)).toBeTruthy();
@@ -212,7 +212,7 @@ describe('State should be implemented correctly - fixed tests', () => {
   });
 });
 
-describe('State should be implemented correctly - variable tests', () => {
+describe('State should be implemented correctly - letiable tests', () => {
   let countPerLevel = 3;
   let maxLevel = 8;
 
@@ -222,7 +222,7 @@ describe('State should be implemented correctly - variable tests', () => {
       let levels = createLevels(i);
       let allCombinations = createCombinations(levels, countPerLevel);
       let state = createState(levels, countPerLevel);
-      
+
       /// When
       let valueCount = state.totalValueCount();
 
@@ -236,7 +236,7 @@ describe('State should be implemented correctly - variable tests', () => {
       /// Setup
       let levels = createLevels(i);
       let state = createState(levels, countPerLevel);
-      
+
       /// When
       let levelCount = state.levelCount();
 
@@ -259,13 +259,13 @@ describe('State should be implemented correctly - variable tests', () => {
       let combinations = createCombinations(levels, countPerLevel);
       let allEntries = Objects.entries(combinations);
       let state = createState(levels, countPerLevel);
-      var levelNumbers: number[] = [];
-      var paths: Try<string>[] = [];
-      var values: number[] = [];
-      var newValues: number[] = [];
+      let levelNumbers: number[] = [];
+      let paths: Try<string>[] = [];
+      let values: number[] = [];
+      let newValues: number[] = [];
       let mapFn = Collections.randomElement(mappingFns).getOrThrow();
       let newState = state.mappingForEach(mapFn);
-      
+
       /// When
       state.forEach((_k, v, ss, l) => {
         paths.push(ss);
@@ -288,22 +288,22 @@ describe('State should be implemented correctly - variable tests', () => {
       /// Setup
       let levels = createLevels(i);
       let state = createState(levels, countPerLevel);
-      let separator = state.substateSeparator;
+      let sep = state.substateSeparator;
 
       /// When
       let branches = state.createSingleBranches();
 
       /// Then
       branches.forEach(v => {
-        var branchLevels: number[] = [];
+        let branchLevels: number[] = [];
 
-        v.forEach((k, v, ss, l) => {
+        v.forEach((k, v1, ss, l) => {
           branchLevels.push(l);
-          let fullPath = ss.map(v1 => v1 + separator).getOrElse('') + k;
+          let fullPath = ss.map(v2 => v2 + sep).getOrElse('') + k;
           let valueAtPath = state.valueAtNode(fullPath);
-          expect(valueAtPath.value).toBe(v.value);
+          expect(valueAtPath.value).toBe(v1.value);
         });
-        
+
         expect(Math.max(...branchLevels) + 1).toBe(v.levelCount());
       });
 
@@ -345,7 +345,7 @@ describe('State should be immutable', () => {
 
   it('Setting values directly - should not mutate state', () => {
     /// Setup & When
-    state.values['a'] = '2';
+    state.values.a = '2';
 
     /// Then
     expect(state.valueAtNode('a').value).not.toBe(2);
