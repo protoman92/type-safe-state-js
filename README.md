@@ -4,7 +4,7 @@
 [![Build Status](https://travis-ci.org/protoman92/TypeSafeState-JS.svg?branch=master)](https://travis-ci.org/protoman92/TypeSafeState-JS)
 [![Coverage Status](https://coveralls.io/repos/github/protoman92/TypeSafeState-JS/badge.svg?branch=master)](https://coveralls.io/github/protoman92/TypeSafeState-JS?branch=master)
 
-Functional, type-safe nested state object that can be used for (but not limited to) Redux architectures.
+Functional, type-safe nested state object that can be used for (but not limited to) Redux architectures. Since it is immutable by default (all update operations must be done via a limited selection of functions), we do not need to worry about shared state management.
 
 To use this State:
 
