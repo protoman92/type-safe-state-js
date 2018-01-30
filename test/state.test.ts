@@ -73,7 +73,7 @@ describe('State should be implemented correctly - fixed tests', () => {
     initialState = State.empty<number>().updatingKeyValues(allCombinations);
   });
 
-  it('Separate path into substate and value paths - should work', () => {
+  it('Separate path into substate and value paths - should work correctly', () => {
     /// Setup
     let sp = '.';
     let path1 = 'should.be.correct';
@@ -175,7 +175,7 @@ describe('State should be implemented correctly - fixed tests', () => {
     expect(initialState.equals(flattened2, compareFn)).toBeTruthy();
   });
 
-  it('Flatten state - should work', () => {
+  it('Flatten state - should work correctly', () => {
     /// Setup
     let flattened = initialState.flatten();
     let keys = [State.valuesKey, State.substateKey];
@@ -186,7 +186,7 @@ describe('State should be implemented correctly - fixed tests', () => {
     }
   });
 
-  it('Mapping values - should work', () => {
+  it('Mapping values - should work correctly', () => {
     /// Setup
     let keys = Object.keys(allCombinations);
     let key = Collections.randomElement(keys).getOrThrow();
@@ -212,7 +212,7 @@ describe('State should be implemented correctly - fixed tests', () => {
   });
 });
 
-describe('State should be implemented correctly - letiable tests', () => {
+describe('State should be implemented correctly - variable tests', () => {
   let countPerLevel = 3;
   let maxLevel = 8;
 
@@ -245,7 +245,7 @@ describe('State should be implemented correctly - letiable tests', () => {
     }
   });
 
-  it('State for each/map for each should work', () => {
+  it('State for each/map for each - should work correctly', () => {
     /// Setup
     let mappingFns: ((v: number) => number)[] = [
       v => v * 10 + 15,
@@ -283,7 +283,7 @@ describe('State should be implemented correctly - letiable tests', () => {
     }
   });
 
-  it('State branching out - should work', () => {
+  it('Create single branches - should work correctly', () => {
     for (let i of Numbers.range(1, maxLevel)) {
       /// Setup
       let levels = createLevels(i);
