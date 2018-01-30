@@ -9,7 +9,7 @@ Functional, type-safe nested state object that can be used for (but not limited 
 To use this State:
 
 ```typescript
-import { State } from 'typesafereduxstate-js';
+import { State } from 'type-safe-state-js';
 ```
 
 This State object contains the a key-value object of the current state values, as well as a key-value object of nested substates. To access the value at any node, use:
