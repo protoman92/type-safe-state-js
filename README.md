@@ -27,7 +27,7 @@ class App extends Component<Props.Type, StateType<any>> {
   }
   
   private operationThatSetsState(state: State.Self<any>): void {
-    this.setState(state.flatten());
+    this.setState(this.convertStateForPlatform(state));
   }
   
   private convertStateForPlatform(state: State.Self<any>): StateType<any> {

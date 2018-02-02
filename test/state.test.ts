@@ -326,6 +326,39 @@ describe('State\'s instanceAtNode should be implemented correctly', () => {
   });
 });
 
+describe('State construction should be implemented correctly', () => {
+  it('State.fromState with undefined state - should work correctly', () => {
+    /// Setup
+    let state1: State.Type<any> = (({
+      values: undefined,
+      substate: undefined,
+    }) as any) as State.Type<any>;
+
+    /// When
+    let result = State.fromState(state1);
+
+    /// Then
+    expect(result.isEmpty()).toBeTruthy();
+  });
+
+  it('State.fromKeyValue with undefined object - should work correctly', () => {
+    /// Setup
+    let state1 = undefined;
+
+    let state2: State.Type<any> = (({
+      values: undefined,
+      substate: undefined,
+    }) as any) as State.Type<any>;
+
+    /// When
+    let result1 = State.fromKeyValue(state1);
+    let result2 = State.fromKeyValue(state2);
+
+    /// Then
+    [result1, result2].forEach(v => expect(v.isEmpty()).toBeTruthy());
+  });
+});
+
 describe('State should be immutable', () => {
   let state = State.empty<any>()
     .updatingValue('a', 1)

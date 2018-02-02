@@ -55,34 +55,41 @@ export function empty<T>(): Self<T> {
 /**
  * Build a state from another state.
  * @template T Generics parameter.
- * @param {Type<T>} state A Type instance.
+ * @param {Nullable<Type<T>>} state A Type instance.
  * @returns {Self<T>} A Self instance.
  */
-export function fromState<T>(state: Type<T>): Self<T> {
-  if (state instanceof Self) {
+export function fromState<T>(state: Nullable<Type<T>>): Self<T> {
+  if (state === undefined || state === null) {
+    return empty<T>();
+  } if (state instanceof Self) {
     return state;
   } else {
-    let substates = Objects.entries(state.substate)
+    let values = state.values || {};
+    let substate = state.substate || {};
+
+    let substates = Objects.entries(substate)
       .map(v => ({[v[0]] : fromState(v[1])}))
       .reduce((v1, v2) => Object.assign({}, v1, v2), {});
 
-    return builder<T>().withValues(state.values).withSubstate(substates).build();
+    return builder<T>().withValues(values).withSubstate(substates).build();
   }
 }
 
 /**
  * Build a state from a possible state.
- * @template T Generics parameter.
- * @param {StateType<T>} state A StateType instance.
+ * @param {Nullable<StateType<any>>} state A StateType instance.
  * @returns {Self<T>} A Self instance.
  */
-export function fromKeyValue(state: StateType<any>): Self<any> {
-  if (Types.isInstance<Type<any>>(state, valuesKey, substateKey)) {
+export function fromKeyValue(state: Nullable<StateType<any>>): Self<any> {
+  if (state === undefined || state === null) {
+    return empty<any>();
+  } if (Types.isInstance<Type<any>>(state, valuesKey, substateKey)) {
     return fromState(state);
   } else {
-    let _values = state['_' + valuesKey];
+    let _values = state['_' + valuesKey] || {};
+    let _substates = state['_' + substateKey] || {};
 
-    let _substate = Objects.entries<any>(state['_' + substateKey])
+    let _substate = Objects.entries<any>(_substates)
       .map(v => ({[v[0]] : fromKeyValue(v[1])}))
       .reduce((v1, v2) => Object.assign({}, v1, v2), {});
 
@@ -144,9 +151,9 @@ export class Self<T> implements BuildableType<Builder<T>>, Type<T> {
    * @param {Builder<T>} bd The builder that owns this state.
    * @returns {this} The current State instance.
    */
-  public setValues = (values: Values<T>, bd: Builder<T>): this => {
+  public setValues = (values: Nullable<Values<T>>, bd: Builder<T>): this => {
     if (this.canMutateValues(bd)) {
-      this._values = values;
+      this._values = values || {};
       return this;
     } else {
       throw Error('Cannot set values');
@@ -155,13 +162,13 @@ export class Self<T> implements BuildableType<Builder<T>>, Type<T> {
 
   /**
    * Set the current substates.
-   * @param {Substate<T>} substate A Substate instance.
+   * @param {Nullable<Substate<T>>} substate A Substate instance.
    * @param {Builder<T>} bd The builder that owns this state.
    * @returns {this} The current State instance.
    */
-  public setSubstates = (substate: Substate<T>, bd: Builder<T>): this => {
+  public setSubstates = (substate: Nullable<Substate<T>>, bd: Builder<T>): this => {
     if (this.canMutateValues(bd)) {
-      this._substate = substate;
+      this._substate = substate || {};
       return this;
     } else {
       throw Error('Cannot set values');
@@ -260,7 +267,7 @@ export class Self<T> implements BuildableType<Builder<T>>, Type<T> {
    * @returns {boolean} A boolean value.
    */
   public hasValues = (): boolean => {
-    return Objects.entries(this._values).length > 0;
+    return Object.keys(this._values).length > 0;
   }
 
   /**
@@ -268,7 +275,7 @@ export class Self<T> implements BuildableType<Builder<T>>, Type<T> {
    * @returns {boolean} A boolean value.
    */
   public hasSubstate = (): boolean => {
-    return Objects.entries(this._substate).length > 0;
+    return Object.keys(this._substate).length > 0;
   }
 
   /**
@@ -276,7 +283,7 @@ export class Self<T> implements BuildableType<Builder<T>>, Type<T> {
    * @returns {boolean} A boolean value.
    */
   public isEmpty = (): boolean => {
-    return this.hasValues() && this.hasSubstate();
+    return !(this.hasValues() && this.hasSubstate());
   }
 
   /**
@@ -483,7 +490,7 @@ export class Self<T> implements BuildableType<Builder<T>>, Type<T> {
   public updatingKeyValues = (values: JSObject<T>): Self<T> => {
     let state = this.cloneBuilder().build();
 
-    Objects.entries(values).forEach((v) => {
+    Objects.entries(values || {}).forEach((v) => {
       state = state.updatingValue(v[0], v[1]);
     });
 
@@ -525,10 +532,6 @@ export class Self<T> implements BuildableType<Builder<T>>, Type<T> {
         .getOrElse(this);
     }
   }
-
-  // public updatingSubstates = (substates: [string, Nullable<Self<T>>][]): Self<T> => {
-
-  // }
 
   /**
    * Remove the substate at some node.
@@ -712,11 +715,11 @@ export class Self<T> implements BuildableType<Builder<T>>, Type<T> {
 
   /**
    * Check if the current state equals another state.
-   * @param {JSObject<any>} object A JSObject instance.
+   * @param {StateType<JSObject<any>>} object A JSObject instance.
    * @param {(v1: T, v2: T) => boolean} fn Compare function.
    * @returns {boolean} A boolean value.
    */
-  public equals = (object: JSObject<any>, fn: (v1: T, v2: T) => boolean): boolean => {
+  public equals = (object: Nullable<StateType<any>>, fn: (v1: T, v2: T) => boolean): boolean => {
     if (object !== undefined && object !== null) {
       let state = fromKeyValue(object);
       let thisValues = this._values;
@@ -789,29 +792,29 @@ export class Builder<T> implements BuilderType<Self<T>> {
 
   /**
    * Check if the current Builder has a particular state.
-   * @param {Self} state A Self instance.
+   * @param {Nullable<Self<T>>} state A Self instance.
    * @returns {boolean} A boolean value.
    */
-  public hasSameState(state: Self<T>): boolean {
+  public hasSameState(state: Nullable<Self<T>>): boolean {
     return this.state === state;
   }
 
   /**
    * Replace the current state values.
-   * @param {Values<T>} values A Values instance.
+   * @param {Nullable<Values<T>>} values A Values instance.
    * @returns {this} The current Builder instance.
    */
-  public withValues = (values: Values<T>): this => {
+  public withValues = (values: Nullable<Values<T>>): this => {
     this.state.setValues(values, this);
     return this;
   }
 
   /**
    * Replace the current substate.
-   * @param {Substate<T>} substate A Substate instance.
+   * @param {Nullable<Substate<T>>} substate A Substate instance.
    * @returns {this} The current Builder instance.
    */
-  public withSubstate = (substate: Substate<T>): this => {
+  public withSubstate = (substate: Nullable<Substate<T>>): this => {
     this.state.setSubstates(substate, this);
     return this;
   }

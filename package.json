@@ -1,6 +1,6 @@
 {
   "name": "type-safe-state-js",
-  "version": "1.1.6",
+  "version": "1.1.7",
   "description": "Functional, type-safe nested state object.",
   "main": "./dist/src/index.js",
   "types": "./dist/src/index.d.ts",
@@ -21,6 +21,13 @@
     "url": "https://github.com/protoman92/TypeSafeState-JS/issues"
   },
   "homepage": "https://github.com/protoman92/TypeSafeState-JS#readme",
+  "keywords": [
+    "functional",
+    "immutable",
+    "react",
+    "react native",
+    "redux"
+  ],
   "dependencies": {
     "javascriptutilities": "^1.2.6"
   },
