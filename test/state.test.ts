@@ -52,7 +52,7 @@ let createCombinations = (levels: string[], countPerLevel: number): JSObject<any
   return allCombinations;
 };
 
-let createState = (levels: string[], countPerLevel: number): State.Self<number> => {
+let createState = (levels: string[], countPerLevel: number): State.Type<number> => {
   let combinations = createCombinations(levels, countPerLevel);
   return State.empty<number>().updatingKeyValues(combinations);
 };
@@ -63,7 +63,7 @@ describe('State should be implemented correctly - fixed tests', () => {
   let countPerLevel = 2;
   let allCombinations: JSObject<any>;
   let allEntries: [string, any][];
-  let initialState: State.Self<number>;
+  let initialState: State.Type<number>;
 
   beforeEach(() => {
     levelCount = 8;
@@ -264,7 +264,7 @@ describe('State should be implemented correctly - variable tests', () => {
       let values: number[] = [];
       let newValues: number[] = [];
       let mapFn = Collections.randomElement(mappingFns).getOrThrow();
-      let newState = state.mappingForEach(mapFn);
+      let newState = state.mappingEach(mapFn);
 
       /// When
       state.forEach((_k, v, ss, l) => {
@@ -310,16 +310,33 @@ describe('State should be implemented correctly - variable tests', () => {
       expect(branches.length).toBe(countPerLevel ** (i - 1));
     }
   });
+
+  it('State.fromKeyValue using flattened object should work correctly', () => {
+    for (let i of Numbers.range(1, maxLevel)) {
+      /// Setup
+      let levels = createLevels(i);
+      let state = createState(levels, countPerLevel);
+
+      /// When
+      let flattened = state.flatten();
+      let reconstructed = State.fromKeyValue(flattened);
+
+      /// Then
+      expect(reconstructed.equals(state, (v1, v2) => v1 === v2)).toBeTruthy();
+    }
+  });
 });
 
 describe('State\'s instanceAtNode should be implemented correctly', () => {
-  let state = State.empty<State.Self<string>>()
-    .updatingValue('1.2.3', State.empty<string>())
-    .updatingValue('1.2.3.4', State.empty());
+  class A { constructor() {} }
+
+  let state = State.empty<A>()
+    .updatingValue('1.2.3', new A())
+    .updatingValue('1.2.3.4', new A());
 
   it('instanceAtNode should be implemented correctly', () => {
     /// Setup
-    let instance = state.instanceAtNode(State.Self, '1.2.3');
+    let instance = state.instanceAtNode(A, '1.2.3');
 
     /// When & Then
     expect(instance.isSuccess()).toBeTruthy();
@@ -364,17 +381,6 @@ describe('State should be immutable', () => {
     .updatingValue('a', 1)
     .updatingValue('a.b.c', 2)
     .updatingValue('a.b.d', 3);
-
-  it('Non-owning builder mutating state - should fail', () => {
-    /// Setup
-    let altBuilder = State.builder();
-    let altState = altBuilder.build();
-    let anyBuilder = State.builder<number>();
-
-    /// When & Then
-    expect(() => state.setValue('a', 1, anyBuilder)).toThrow();
-    expect(() => altState.setValue('a', 1, altBuilder)).toThrow();
-  });
 
   it('Setting values directly - should not mutate state', () => {
     /// Setup & When

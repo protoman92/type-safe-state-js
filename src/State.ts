@@ -12,9 +12,9 @@ import {
 
 export type UpdateFn<T> = (v: Try<T>) => TryResult<T>;
 export type Values<T> = JSObject<T>;
-export type Substate<T> = JSObject<Self<T>>;
+export type Substate<T> = JSObject<Type<T>>;
 export type MapFn<T, R> = (value: T) => R;
-export type StateType<T> = Self<T> | JSObject<T>;
+export type StateType<T> = Type<T> | JSObject<T>;
 
 export type ForEach<T> = (
   k: string,
@@ -46,9 +46,9 @@ export function builder<T>(): Builder<T> {
 /**
  * Get an empty state.
  * @template T Generics parameter.
- * @returns {Self<T>} A Self instance.
+ * @returns {Type<T>} A Type instance.
  */
-export function empty<T>(): Self<T> {
+export function empty<T>(): Type<T> {
   return builder<T>().build();
 }
 
@@ -56,9 +56,9 @@ export function empty<T>(): Self<T> {
  * Build a state from another state.
  * @template T Generics parameter.
  * @param {Nullable<Type<T>>} state A Type instance.
- * @returns {Self<T>} A Self instance.
+ * @returns {Type<T>} A Type instance.
  */
-export function fromState<T>(state: Nullable<Type<T>>): Self<T> {
+export function fromState<T>(state: Nullable<Type<T>>): Type<T> {
   if (state === undefined || state === null) {
     return empty<T>();
   } if (state instanceof Self) {
@@ -78,9 +78,9 @@ export function fromState<T>(state: Nullable<Type<T>>): Self<T> {
 /**
  * Build a state from a possible state.
  * @param {Nullable<StateType<any>>} state A StateType instance.
- * @returns {Self<T>} A Self instance.
+ * @returns {Type<T>} A Type instance.
  */
-export function fromKeyValue(state: Nullable<StateType<any>>): Self<any> {
+export function fromKeyValue(state: Nullable<StateType<any>>): Type<any> {
   if (state === undefined || state === null) {
     return empty<any>();
   } if (Types.isInstance<Type<any>>(state, valuesKey, substateKey)) {
@@ -97,15 +97,50 @@ export function fromKeyValue(state: Nullable<StateType<any>>): Self<any> {
   }
 }
 
-export interface Type<T> {
+/**
+ * Represents a state object.
+ * @extends {BuildableType<Builder<T>>} Buildable extension.
+ * @template T Generics parameter.
+ */
+export interface Type<T> extends BuildableType<Builder<T>> {
   values: Values<T>;
   substate: Substate<T>;
+  substateSeparator: string;
+  hasValues(): boolean;
+  isEmpty(): boolean;
+  firstValue(): Try<T>;
+  firstSubstate(): Try<Type<T>>;
+  substateAtNode(id: string): Try<Type<T>>;
+  valueAtNode(id: string): Try<T>;
+  stringAtNode(id: string): Try<string>;
+  booleanAtNode(id: string): Try<boolean>;
+  numberAtNode(id: string): Try<number>;
+  instanceAtNode<R>(ctor: new () => R, id: string): Try<R>;
+  mappingValue(id: string, fn: UpdateFn<T>): Type<T>;
+  updatingValue(id: string, value: Nullable<T>): Type<T>;
+  updatingKeyValues(values: JSObject<T>): Type<T>;
+  removingValue(id: string): Type<T>;
+  updatingSubstate(id: string, ss: Nullable<Type<T>>): Type<T>;
+  removingSubstate(id: string): Type<T>;
+  emptying(): Type<T>;
+  flatten(): JSObject<any>;
+  levelCount(): number;
+  totalValueCount(): number;
+  forEach(selector: ForEach<T>): void;
+  mappingEach<R>(selector: MapFn<T, R>): Type<R>;
+  createSingleBranches(): Type<T>[];
+  equals(state: Nullable<StateType<T>>, fn: (v1: T, v2: T) => boolean): boolean;
 }
 
-export class Self<T> implements BuildableType<Builder<T>>, Type<T> {
-  private _values: Values<T>;
-  private _substate: Substate<T>;
-  private _substateSeparator: string;
+/**
+ * Represents a state object.
+ * @implements {Type<T>} Type implementation.
+ * @template T Generics parameter.
+ */
+class Self<T> implements Type<T> {
+  public _values: Values<T>;
+  public _substate: Substate<T>;
+  public _substateSeparator: string;
 
   public get values(): Values<T> {
     return Object.assign({}, this._values);
@@ -137,129 +172,86 @@ export class Self<T> implements BuildableType<Builder<T>>, Type<T> {
   public cloneBuilder = (): Builder<T> => this.builder().withBuildable(this);
 
   /**
-   * Check whether a builder can mutate the current state's values.
-   * @param {Builder<T>} bd The builder that owns this state.
-   * @returns {boolean} A boolean value.
-   */
-  private canMutateValues = (bd: Builder<T>): boolean => {
-    return bd.hasSameState(this) && !bd.hasBuilt;
-  }
-
-  /**
    * Set the current state values.
    * @param {Values<T>} values A Values instance.
-   * @param {Builder<T>} bd The builder that owns this state.
    * @returns {this} The current State instance.
    */
-  public setValues = (values: Nullable<Values<T>>, bd: Builder<T>): this => {
-    if (this.canMutateValues(bd)) {
-      this._values = values || {};
-      return this;
-    } else {
-      throw Error('Cannot set values');
-    }
+  public setValues = (values: Nullable<Values<T>>): this => {
+    this._values = values || {};
+    return this;
   }
 
   /**
    * Set the current substates.
    * @param {Nullable<Substate<T>>} substate A Substate instance.
-   * @param {Builder<T>} bd The builder that owns this state.
    * @returns {this} The current State instance.
    */
-  public setSubstates = (substate: Nullable<Substate<T>>, bd: Builder<T>): this => {
-    if (this.canMutateValues(bd)) {
-      this._substate = substate || {};
-      return this;
-    } else {
-      throw Error('Cannot set values');
-    }
+  public setSubstates = (substate: Nullable<Substate<T>>): this => {
+    this._substate = substate || {};
+    return this;
   }
 
   /**
    * Set the substate separator.
    * @param {string} separator A string value.
-   * @param {Builder<T>} bd The builder that owns this state.
    * @returns {this} The current State instance.
    */
-  public setSubstateSeparator = (separator: string, bd: Builder<T>): this => {
-    if (this.canMutateValues(bd)) {
-      this._substateSeparator = separator;
-      return this;
-    } else {
-      throw Error('Cannot set values');
-    }
+  public setSubstateSeparator = (separator: string): this => {
+    this._substateSeparator = separator;
+    return this;
   }
 
   /**
    * Update the current state values.
    * @param {string} key A string value.
    * @param {T} value T object.
-   * @param {Builder<T>} bd The builder that owns this state.
    * @returns {this} The current State instance.
    */
-  public setValue = (key: string, value: T, bd: Builder<T>): this => {
-    if (this.canMutateValues(bd)) {
-      this._values[key] = value;
-      return this;
-    } else {
-      throw Error('Cannot update values');
-    }
+  public setValue = (key: string, value: T): this => {
+    this._values[key] = value;
+    return this;
   }
 
   /**
    * Remove some value from the current state.
    * @param {string} key A string value.
-   * @param {Builder<T>} bd The builder that owns this state.
    * @returns {this} The current State instance.
    */
-  public removeValue = (key: string, bd: Builder<T>): this => {
-    if (this.canMutateValues(bd)) {
-      let oldValues = this._values;
-      let entries = Objects.entries(oldValues).filter(v => v[0] !== key);
+  public removeValue = (key: string): this => {
+    let oldValues = this._values;
+    let entries = Objects.entries(oldValues).filter(v => v[0] !== key);
 
-      this._values = entries.map(v => ({[v[0]]: v[1]}))
-        .reduce((v1, v2) => Object.assign({}, v1, v2), {});
+    this._values = entries
+      .map(v => ({ [v[0]]: v[1] }))
+      .reduce((v1, v2) => Object.assign({}, v1, v2), {});
 
-      return this;
-    } else {
-      throw Error('Cannot remove values');
-    }
+    return this;
   }
 
   /**
    * Update the current substates.
    * @param {string} key A string value.
-   * @param {Self<T>} ss A Self instance.
-   * @param {Builder<T>} bd The builder that owns this state.
+   * @param {Type<T>} ss A Type instance.
    * @returns {this} The current State instance.
    */
-  public setSubstate = (key: string, ss: Self<T>, bd: Builder<T>): this => {
-    if (this.canMutateValues(bd)) {
-      this._substate[key] = ss;
-      return this;
-    } else {
-      throw Error('Cannot update substate');
-    }
+  public setSubstate = (key: string, ss: Type<T>): this => {
+    this._substate[key] = ss;
+    return this;
   }
 
   /**
    * Remove some substate from the current substates.
    * @param {string} key A string value.
-   * @param {Builder<T>} bd The builder that owns this state.
    * @returns {this} The current State instance.
    */
-  public removeSubState = (key: string, bd: Builder<T>): this => {
-    if (this.canMutateValues(bd)) {
-      let oldSS = this._substate;
-      let entries = Objects.entries(oldSS).filter(v => v[0] !== key);
+  public removeSubState = (key: string): this => {
+    let oldSS = this._substate;
+    let entries = Objects.entries(oldSS).filter(v => v[0] !== key);
 
-      this._substate = entries.map(v => ({[v[0]]: v[1]}))
-        .reduce((v1, v2) => Object.assign({}, v1, v2), {});
+    this._substate = entries.map(v => ({ [v[0]]: v[1] }))
+      .reduce((v1, v2) => Object.assign({}, v1, v2), {});
 
-      return this;
-    } else {
-      throw Error('Cannot remove substate');
-    }
+    return this;
   }
 
   /**
@@ -299,9 +291,9 @@ export class Self<T> implements BuildableType<Builder<T>>, Type<T> {
 
   /**
    * Get the first substate in the substate object.
-   * @returns {Try<Self<T>>} A Try Self instance.
+   * @returns {Try<Type<T>>} A Try Type instance.
    */
-  public firstSubstate = (): Try<Self<T>> => {
+  public firstSubstate = (): Try<Type<T>> => {
     return Collections
       .first(Objects.entries(this._substate))
       .map(v => v[0])
@@ -312,9 +304,9 @@ export class Self<T> implements BuildableType<Builder<T>>, Type<T> {
    * Get the substate at a particular node.
    * @param {string} id A string value.
    * @param {string} original The original id.
-   * @returns {Try<Self<T>>} A Try Self instance.
+   * @returns {Try<Type<T>>} A Try Type instance.
    */
-  private _substateAtNode = (id: string, original: string): Try<Self<T>> => {
+  private _substateAtNode = (id: string, original: string): Try<Type<T>> => {
     let separator = this.substateSeparator;
     let separated = id.split(separator);
     let length = separated.length;
@@ -330,6 +322,7 @@ export class Self<T> implements BuildableType<Builder<T>>, Type<T> {
       return Try.unwrap(() => separated.slice(1, length).join(separator))
         .zipWith(first, (v1, v2): [string, string] => [v1, v2])
         .map(v => this._substateAtNode(v[1], original)
+          .map(v1 => fromState(v1) as Self<T>)
           .map(v1 => v1._substateAtNode(v[0], original)))
         .flatMap(v => v.flatMap(v1 => v1));
     }
@@ -338,11 +331,9 @@ export class Self<T> implements BuildableType<Builder<T>>, Type<T> {
   /**
    * Get the substate at a particular node.
    * @param {string} id A string value.
-   * @returns {Try<Self<T>>} A Try Self instance.
+   * @returns {Try<Type<T>>} A Try Type instance.
    */
-  public substateAtNode = (id: string): Try<Self<T>> => {
-    return this._substateAtNode(id, id);
-  }
+  public substateAtNode = (id: string) => this._substateAtNode(id, id);
 
   /**
    * Get the state value at a particular node.
@@ -363,6 +354,7 @@ export class Self<T> implements BuildableType<Builder<T>>, Type<T> {
       return Try.unwrap(() => separated.slice(1, length).join(separator))
         .zipWith(first, (v1, v2): [string, string] => [v1, v2])
         .map(v => this._substateAtNode(v[1], original)
+          .map(v1 => fromState(v1) as Self<T>)
           .map(v1 => v1._valueAtNode(v[0], original)))
         .flatMap(v => v.flatMap(v1 => v1));
     }
@@ -373,9 +365,7 @@ export class Self<T> implements BuildableType<Builder<T>>, Type<T> {
    * @param {string} id A string value.
    * @returns {Try<T>} Try T object.
    */
-  public valueAtNode = (id: string): Try<T> => {
-    return this._valueAtNode(id, id);
-  }
+  public valueAtNode = (id: string) => this._valueAtNode(id, id);
 
   /**
    * Convenience method to get a string from a node.
@@ -444,9 +434,9 @@ export class Self<T> implements BuildableType<Builder<T>>, Type<T> {
    * create whatever substate that is not present.
    * @param {string} id A string value.
    * @param {UpdateFn<T>} fn Selector function.
-   * @returns {Self<T>} A State instance.
+   * @returns {Type<T>} A State instance.
    */
-  public mappingValue = (id: string, fn: UpdateFn<T>): Self<T> => {
+  public mappingValue = (id: string, fn: UpdateFn<T>): Type<T> => {
     let separator = this.substateSeparator;
     let separated = id.split(separator);
     let length = separated.length;
@@ -472,9 +462,9 @@ export class Self<T> implements BuildableType<Builder<T>>, Type<T> {
    * Update the value at some node, ignoring the old value.
    * @param {string} id A string value.
    * @param {Nullable<T>} value T object.
-   * @returns {Self} A State instance.
+   * @returns {Type} A State instance.
    */
-  public updatingValue = (id: string, value: Nullable<T>): Self<T> => {
+  public updatingValue = (id: string, value: Nullable<T>): Type<T> => {
     let updateFn: UpdateFn<T> = () => {
       return Try.unwrap(value, `No value found at ${id}`);
     };
@@ -485,9 +475,9 @@ export class Self<T> implements BuildableType<Builder<T>>, Type<T> {
   /**
    * Update all values from some key-value object.
    * @param {JSObject<T>} values A JSObject instance.
-   * @returns {Self<T>} A State instance.
+   * @returns {Type<T>} A State instance.
    */
-  public updatingKeyValues = (values: JSObject<T>): Self<T> => {
+  public updatingKeyValues = (values: JSObject<T>): Type<T> => {
     let state = this.cloneBuilder().build();
 
     Objects.entries(values || {}).forEach((v) => {
@@ -500,9 +490,9 @@ export class Self<T> implements BuildableType<Builder<T>>, Type<T> {
   /**
    * Remove the value at some node.
    * @param {string} id A string value.
-   * @returns {Self<T>} A State instance.
+   * @returns {Type<T>} A State instance.
    */
-  public removingValue = (id: string): Self<T> => {
+  public removingValue = (id: string): Type<T> => {
     return this.updatingValue(id, undefined);
   }
 
@@ -510,18 +500,19 @@ export class Self<T> implements BuildableType<Builder<T>>, Type<T> {
    * Update the substate at some node with another substate, ignoring the old
    * substate.
    * @param {string} id A string value.
-   * @param {Nullable<Self<T>>} ss A Self instance.
-   * @returns {Self<T>} A State instance.
+   * @param {Nullable<Type<T>>} ss A Type instance.
+   * @returns {Type<T>} A State instance.
    */
-  public updatingSubstate = (id: string, ss: Nullable<Self<T>>): Self<T> => {
+  public updatingSubstate = (id: string, ss: Nullable<Type<T>>): Type<T> => {
     let separator = this.substateSeparator;
     let separated = id.split(separator);
     let length = separated.length;
     let first = Collections.first(separated);
 
     if (length === 1) {
-      return first.map(v => this.cloneBuilder()
-        .updateSubstate(v, ss).build()).getOrElse(this);
+      return first
+        .map(v => this.cloneBuilder().updateSubstate(v, ss).build())
+        .getOrElse(this);
     } else {
       let subId = Try.unwrap(() => separated.slice(1, length).join(separator));
 
@@ -536,22 +527,24 @@ export class Self<T> implements BuildableType<Builder<T>>, Type<T> {
   /**
    * Remove the substate at some node.
    * @param {string} id A string value.
-   * @returns {Self<T>} A Self instance.
+   * @returns {Type<T>} A Type instance.
    */
-  public removingSubstate = (id: string): Self<T> => {
-    return this.updatingSubstate(id, undefined);
-  }
+  public removingSubstate = (id: string) => this.updatingSubstate(id, undefined);
 
   /**
    * Empty the current state.
-   * @returns {Self<T>} A Self instance.
+   * @returns {Type<T>} A Type instance.
    */
-  public emptying = (): Self<T> => empty();
+  public emptying = (): Type<T> => empty();
 
   /**
    * Flatten the current state to a key-value object. If we want a JSON of the
    * current state, we should use this method instead of JSON.parse(JSON.stringify)
    * because the key names will be different. (e.g. _values instead of values).
+   *
+   * It is unfortunate that the resulting KV object has generic 'any', so if we
+   * want to convert back to whatever generics we were using before, use
+   * 'fromKeyValue' then 'mappingEach' to cast values back to original form.
    * @returns {JSObject<any>} A JSObject instance.
    */
   public flatten = (): JSObject<any> => {
@@ -613,12 +606,14 @@ export class Self<T> implements BuildableType<Builder<T>>, Type<T> {
 
     Try.success(substateEntries)
       .map(v => v.map(v1 => {
-        return Try.unwrap(v1[1]).map((v2): [string, Self<T>] => [v1[0], v2]);
+        return Try.unwrap(v1[1]).map((v2): [string, Type<T>] => [v1[0], v2]);
       }))
       .map(v => Collections.flatMap(v))
       .map(v => v.forEach(v1 => {
         let path = ssPath.map(v2 => v2 + separator).getOrElse('') + v1[0];
-        v1[1]._forEach(selector, Try.success(path), level + 1);
+        let newLevel = level + 1;
+        let newPath = Try.success(path);
+        (fromState(v1[1]) as Self<T>)._forEach(selector, newPath, newLevel);
       }));
   }
 
@@ -633,9 +628,9 @@ export class Self<T> implements BuildableType<Builder<T>>, Type<T> {
   /**
    * Map all values in the current state to a different type.
    * @param {MapFn<T, R>} selector Selector function.
-   * @returns {Self<R>} A Self instance.
+   * @returns {Type<R>} A Type instance.
    */
-  public mappingForEach<R>(selector: MapFn<T, R>): Self<R> {
+  public mappingEach<R>(selector: MapFn<T, R>): Type<R> {
     let separator = this.substateSeparator;
     let state = empty<R>();
 
@@ -663,12 +658,14 @@ export class Self<T> implements BuildableType<Builder<T>>, Type<T> {
    *  |
    * @param {string} ssKey The current substate key. This is the key that
    * identifies a substate in this._substates.
-   * @returns {[string, Self<T>][]} An Array of state.
+   * @returns {[string, Type<T>][]} An Array of state.
    */
-  private _createSingleBranches = (ssKey: Nullable<string>): [string, Self<T>][] => {
+  private _createSingleBranches = (ssKey: Nullable<string>): [string, Type<T>][] => {
     let substateBranches = Try.success(Objects.entries(this._substate))
       .map(v => v.map(v1 => {
-        return Try.unwrap(v1[1]).map((v2): [string, Self<T>] => [v1[0], v2]);
+        return Try.unwrap(v1[1])
+          .map(v2 => fromState(v2) as Self<T>)
+          .map((v2): [string, Self<T>] => [v1[0], v2]);
       }))
       .map(v => Collections.flatMap(v))
       .filter(v => v.length > 0, 'No substate found')
@@ -677,7 +674,7 @@ export class Self<T> implements BuildableType<Builder<T>>, Type<T> {
 
         if (branches.length > 0) {
           return branches.map((v2): [string, Self<T>] => {
-            return [v1[0], empty<T>().updatingSubstate(v2[0], v2[1])];
+            return [v1[0], <Self<T>>empty<T>().updatingSubstate(v2[0], v2[1])];
           });
         } else {
           return [v1];
@@ -700,16 +697,16 @@ export class Self<T> implements BuildableType<Builder<T>>, Type<T> {
       /// If the substateKey is undefined or null, we are on the uppermost level.
       return substateBranches.getOrElse([])
         .map(v => empty<T>().updatingSubstate(v[0], v[1]))
-        .map((v): [string, Self<T>] => ['', v]);
+        .map((v): [string, Type<T>] => ['', v]);
     }
   }
 
   /**
    * Produce branches of the current state - each branch should contain at most
    * one substate.
-   * @returns {Self<T>[]} An Array of state.
+   * @returns {Type<T>[]} An Array of state.
    */
-  public createSingleBranches = (): Self<T>[] => {
+  public createSingleBranches = (): Type<T>[] => {
     return this._createSingleBranches(undefined).map(v => v[1]);
   }
 
@@ -778,25 +775,11 @@ export class Self<T> implements BuildableType<Builder<T>>, Type<T> {
   }
 }
 
-export class Builder<T> implements BuilderType<Self<T>> {
+export class Builder<T> implements BuilderType<Type<T>> {
   private state: Self<T>;
-  private _hasBuilt: boolean;
-
-  public get hasBuilt(): boolean {
-    return this._hasBuilt;
-  }
 
   public constructor() {
     this.state = new Self();
-  }
-
-  /**
-   * Check if the current Builder has a particular state.
-   * @param {Nullable<Self<T>>} state A Self instance.
-   * @returns {boolean} A boolean value.
-   */
-  public hasSameState(state: Nullable<Self<T>>): boolean {
-    return this.state === state;
   }
 
   /**
@@ -805,7 +788,7 @@ export class Builder<T> implements BuilderType<Self<T>> {
    * @returns {this} The current Builder instance.
    */
   public withValues = (values: Nullable<Values<T>>): this => {
-    this.state.setValues(values, this);
+    this.state.setValues(values);
     return this;
   }
 
@@ -815,7 +798,7 @@ export class Builder<T> implements BuilderType<Self<T>> {
    * @returns {this} The current Builder instance.
    */
   public withSubstate = (substate: Nullable<Substate<T>>): this => {
-    this.state.setSubstates(substate, this);
+    this.state.setSubstates(substate);
     return this;
   }
 
@@ -825,7 +808,7 @@ export class Builder<T> implements BuilderType<Self<T>> {
    * @returns {this} The current Builder instance.
    */
   public withSubstateSeparator = (separator: string): this => {
-    this.state.setSubstateSeparator(separator, this);
+    this.state.setSubstateSeparator(separator);
     return this;
   }
 
@@ -839,9 +822,9 @@ export class Builder<T> implements BuilderType<Self<T>> {
     let value = Try.unwrap(fn(this.state.valueAtNode(id))).value;
 
     if (value !== undefined && value !== null) {
-      this.state.setValue(id, value, this);
+      this.state.setValue(id, value);
     } else {
-      this.state.removeValue(id, this);
+      this.state.removeValue(id);
     }
 
     return this;
@@ -864,14 +847,14 @@ export class Builder<T> implements BuilderType<Self<T>> {
   /**
    * Update the current substates with some substate, ignoring the old substate.
    * @param {string} id A string value.
-   * @param {Nullable<Self<T>>} ss A Self instance.
+   * @param {Nullable<Type<T>>} ss A Type instance.
    * @returns {this} The current Builder instance.
    */
-  public updateSubstate = (id: string, ss: Nullable<Self<T>>): this => {
+  public updateSubstate = (id: string, ss: Nullable<Type<T>>): this => {
     if (ss !== undefined && ss !== null) {
-      this.state.setSubstate(id, ss, this);
+      this.state.setSubstate(id, ss);
     } else {
-      this.state.removeSubState(id, this);
+      this.state.removeSubState(id);
     }
 
     return this;
@@ -879,10 +862,10 @@ export class Builder<T> implements BuilderType<Self<T>> {
 
   /**
    * Copy the properties from a state to the current state.
-   * @param {Nullable<Self<T>>} buildable A Self instance.
+   * @param {Nullable<Type<T>>} buildable A Type instance.
    * @returns {this} The current Builder instance.
    */
-  public withBuildable = (buildable: Nullable<Self<T>>): this => {
+  public withBuildable = (buildable: Nullable<Type<T>>): this => {
     if (buildable !== undefined && buildable !== null) {
       return this
         .withValues(buildable.values)
@@ -893,13 +876,5 @@ export class Builder<T> implements BuilderType<Self<T>> {
     }
   }
 
-  /**
-   * Return the inner State and set _hasBuilt to true to prevent the current
-   * Builder from being used to mutate the built State.
-   * @returns {Self<T>} A Self instance.
-   */
-  public build = (): Self<T> => {
-    this._hasBuilt = true;
-    return this.state;
-  }
+  public build = (): Type<T> => this.state;
 }

@@ -4,7 +4,7 @@
 [![Build Status](https://travis-ci.org/protoman92/TypeSafeState-JS.svg?branch=master)](https://travis-ci.org/protoman92/TypeSafeState-JS)
 [![Coverage Status](https://coveralls.io/repos/github/protoman92/TypeSafeState-JS/badge.svg?branch=master)](https://coveralls.io/github/protoman92/TypeSafeState-JS?branch=master)
 
-### REACT NATIVE USERS, PLEASE READ THIS FIRST ###
+### REACT NATIVE USERS, PLEASE READ THIS FIRST: ###
 
 Since React Native only allows the state to be a normal key-value object, using this State will lead to errors when we call **setState** on a Component:
 
@@ -52,6 +52,9 @@ To use this State:
 
 ```typescript
 import { State } from 'type-safe-state-js';
+
+/// Note that we only expose the state interface for better encapsulation.
+let state: State.Type<any> = State.empty<any>();
 ```
 
 This State object contains the a key-value object of the current state values, as well as a key-value object of nested substates. To access the value at any node, use:
@@ -79,7 +82,7 @@ The State object will update the value at that node, and if necessary create new
 This State is useful for Redux reducers because you will not need to check for existence of property keys before updating value at a node. A reducer can be as such:
 
 ```typescript
-function reduce(state: State.Self<any>, action: Action): State.Self<any> {
+function reduce(state: State.Type<any>, action: Action): State.Type<any> {
   return state
     .updatingValue('auth.login.username', action.username)
     .updatingValue('auth.login.password', action.password)
