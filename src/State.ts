@@ -103,9 +103,9 @@ export function fromKeyValue(state: Nullable<StateType<any>>): Type<any> {
  * @template T Generics parameter.
  */
 export interface Type<T> extends BuildableType<Builder<T>> {
-  values: Values<T>;
-  substate: Substate<T>;
-  substateSeparator: string;
+  readonly values: Values<T>;
+  readonly substate: Substate<T>;
+  readonly substateSeparator: string;
   hasValues(): boolean;
   isEmpty(): boolean;
   firstValue(): Try<T>;
