@@ -319,7 +319,7 @@ class Self<T> implements Type<T> {
         .map(v => Try.unwrap(v))
         .flatMap(v => v.mapError(() => `No substate at ${original}`));
     } else {
-      return Try.unwrap(() => separated.slice(1, length).join(separator))
+      return Try.evaluate(() => separated.slice(1, length).join(separator))
         .zipWith(first, (v1, v2): [string, string] => [v1, v2])
         .map(v => this._substateAtNode(v[1], original)
           .map(v1 => fromState(v1) as Self<T>)
@@ -351,7 +351,7 @@ class Self<T> implements Type<T> {
       return first.map(v => Try.unwrap(this.values[v]))
         .flatMap(v => v.mapError(() => `No value found at ${original}`));
     } else {
-      return Try.unwrap(() => separated.slice(1, length).join(separator))
+      return Try.evaluate(() => separated.slice(1, length).join(separator))
         .zipWith(first, (v1, v2): [string, string] => [v1, v2])
         .map(v => this._substateAtNode(v[1], original)
           .map(v1 => fromState(v1) as Self<T>)
@@ -447,7 +447,7 @@ class Self<T> implements Type<T> {
         .updateValueWithFunction(v, fn).build())
         .getOrElse(this);
     } else {
-      let subId = Try.unwrap(() => separated.slice(1, length).join(separator));
+      let subId = Try.evaluate(() => separated.slice(1, length).join(separator));
       let substate = first.flatMap(v => this.substateAtNode(v)).getOrElse(empty());
 
       return first
@@ -514,7 +514,7 @@ class Self<T> implements Type<T> {
         .map(v => this.cloneBuilder().updateSubstate(v, ss).build())
         .getOrElse(this);
     } else {
-      let subId = Try.unwrap(() => separated.slice(1, length).join(separator));
+      let subId = Try.evaluate(() => separated.slice(1, length).join(separator));
 
       return first
         .flatMap(v => Try.unwrap(this._substate[v]))
@@ -819,7 +819,7 @@ export class Builder<T> implements BuilderType<Type<T>> {
    * @returns {this} The current Builder instance.
    */
   public updateValueWithFunction = (id: string, fn: UpdateFn<T>): this => {
-    let value = Try.unwrap(fn(this.state.valueAtNode(id))).value;
+    let value = Try.evaluate(() => fn(this.state.valueAtNode(id))).value;
 
     if (value !== undefined && value !== null) {
       this.state.setValue(id, value);
