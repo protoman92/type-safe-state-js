@@ -39,7 +39,13 @@ class App extends Component<Props.Type, StateType<any>> {
 Since **StateType** is defined as:
 
 ```typescript
-type StateType<T> = State.Selt<T> | { [key: string] : T };
+type StateType<T> = State.Type<T> | { [key: string] : T };
+```
+
+Or as written in the source code:
+
+```typescript
+type StateType<T> = State.Type<T> | JSObject<T>;
 ```
 
 Using **StateType** as the state type for a component effectively takes care of both normal React.js and React Native. **State.fromKeyValue** checks whether the object is of class **State.Self** first before doing anything (and does nothing if it is), so we do not have to worry about unnecessary work.
@@ -91,3 +97,5 @@ function reduce(state: State.Type<any>, action: Action): State.Type<any> {
 ```
 
 As a result, we have a robust, functional set of reducers.
+
+Note that althought the source code defines a class called **State.Self** (which holds all implementations for **State.Type**), it is not exported in order to prevent unwanted state modifications. As a result, we would use **State.Type** for all state operations, and even **cloneBuilder()** (since it extends **BuildableType**). One limitation of this approach is that it becomes harder to provide a different implementation for **State.Type** due to the large number of required methods/properties, but I see little use in doing so.
