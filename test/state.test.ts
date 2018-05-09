@@ -178,10 +178,9 @@ describe('State should be implemented correctly - fixed tests', () => {
   it('Flatten state - should work correctly', () => {
     /// Setup
     let flattened = initialState.flatten();
-    let keys = [State.valuesKey, State.substateKey];
 
     /// When & Then
-    if (!Types.isInstance<State.Type<number>>(flattened, ...keys)) {
+    if (!Types.isInstance<State.Type<number>>(flattened, 'values', 'substate')) {
       fail('Should have been of the same type');
     }
   });
@@ -328,7 +327,7 @@ describe('State should be implemented correctly - variable tests', () => {
 });
 
 describe('State\'s instanceAtNode should be implemented correctly', () => {
-  class A { constructor() {} }
+  class A { constructor() { } }
 
   let state = State.empty<A>()
     .updatingValue('1.2.3', new A())

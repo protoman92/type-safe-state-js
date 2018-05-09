@@ -29,7 +29,7 @@
     "redux"
   ],
   "dependencies": {
-    "javascriptutilities": "^1.2.6"
+    "javascriptutilities": "^1.4.7"
   },
   "devDependencies": {
     "@types/jest": "^21.1.6",

@@ -68,7 +68,7 @@ export function fromState<T>(state: Nullable<Type<T>>): Type<T> {
     let substate = state.substate || {};
 
     let substates = Objects.entries(substate)
-      .map(v => ({[v[0]] : fromState(v[1])}))
+      .map(v => ({ [v[0]]: fromState(v[1]) }))
       .reduce((v1, v2) => Object.assign({}, v1, v2), {});
 
     return builder<T>().withValues(values).withSubstate(substates).build();
@@ -83,14 +83,14 @@ export function fromState<T>(state: Nullable<Type<T>>): Type<T> {
 export function fromKeyValue(state: Nullable<StateType<any>>): Type<any> {
   if (state === undefined || state === null) {
     return empty<any>();
-  } if (Types.isInstance<Type<any>>(state, valuesKey, substateKey)) {
+  } if (Types.isInstance<Type<any>>(state, 'values', 'substate')) {
     return fromState(state);
   } else {
     let _values = state['_' + valuesKey] || {};
     let _substates = state['_' + substateKey] || {};
 
     let _substate = Objects.entries<any>(_substates)
-      .map(v => ({[v[0]] : fromKeyValue(v[1])}))
+      .map(v => ({ [v[0]]: fromKeyValue(v[1]) }))
       .reduce((v1, v2) => Object.assign({}, v1, v2), {});
 
     return builder<any>().withValues(_values).withSubstate(_substate).build();
@@ -374,7 +374,7 @@ class Self<T> implements Type<T> {
    */
   public stringAtNode = (id: string): Try<string> => {
     return this.valueAtNode(id).map(v => {
-      if (typeof(v) === 'string') {
+      if (typeof (v) === 'string') {
         return v;
       } else {
         throw Error(`No string at ${id}`);
@@ -389,7 +389,7 @@ class Self<T> implements Type<T> {
    */
   public numberAtNode = (id: string): Try<number> => {
     return this.valueAtNode(id).map(v => {
-      if (typeof(v) === 'number') {
+      if (typeof (v) === 'number') {
         return v;
       } else {
         throw Error(`No number at ${id}`);
@@ -404,7 +404,7 @@ class Self<T> implements Type<T> {
    */
   public booleanAtNode = (id: string): Try<boolean> => {
     return this.valueAtNode(id).map(v => {
-      if (typeof(v) === 'boolean') {
+      if (typeof (v) === 'boolean') {
         return v;
       } else {
         throw Error(`No boolean at ${id}`);
@@ -549,7 +549,7 @@ class Self<T> implements Type<T> {
    */
   public flatten = (): JSObject<any> => {
     let substates = Objects.entries(this._substate)
-      .map(v => ({[v[0]]: Try.unwrap(v[1]).map(v1 => v1.flatten()).value}))
+      .map(v => ({ [v[0]]: Try.unwrap(v[1]).map(v1 => v1.flatten()).value }))
       .reduce((v1, v2) => Object.assign({}, v1, v2), {});
 
     return { [valuesKey]: this._values, [substateKey]: substates };
@@ -639,7 +639,7 @@ class Self<T> implements Type<T> {
         let newValue = v.map(v1 => selector(v1));
         let fullPath = ss.map(v1 => v1 + separator).getOrElse('') + k;
         state = state.updatingValue(fullPath, newValue.value);
-      } catch {}
+      } catch { }
     });
 
     return state;
@@ -691,7 +691,7 @@ class Self<T> implements Type<T> {
     ///
     /// For these cases, simply return the current state along with its substate
     /// key.
-    if ((ssKey !== undefined && ssKey !== null) || !this.hasSubstate())  {
+    if ((ssKey !== undefined && ssKey !== null) || !this.hasSubstate()) {
       return substateBranches.getOrElse([[ssKey || '', this]]);
     } else {
       /// If the substateKey is undefined or null, we are on the uppermost level.
