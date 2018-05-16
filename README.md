@@ -1,8 +1,8 @@
-# TypeSafeState-JS
+# type-safe-state-js
 
 [![npm version](https://badge.fury.io/js/type-safe-state-js.svg)](https://badge.fury.io/js/type-safe-state-js)
-[![Build Status](https://travis-ci.org/protoman92/TypeSafeState-JS.svg?branch=master)](https://travis-ci.org/protoman92/TypeSafeState-JS)
-[![Coverage Status](https://coveralls.io/repos/github/protoman92/TypeSafeState-JS/badge.svg?branch=master)](https://coveralls.io/github/protoman92/TypeSafeState-JS?branch=master)
+[![Build Status](https://travis-ci.org/protoman92/type-safe-state-js.svg?branch=master)](https://travis-ci.org/protoman92/type-safe-state-js)
+[![Coverage Status](https://coveralls.io/repos/github/protoman92/type-safe-state-js/badge.svg?branch=master)](https://coveralls.io/github/protoman92/type-safe-state-js?branch=master)
 
 ### REACT NATIVE USERS, PLEASE READ THIS FIRST: ###
 
