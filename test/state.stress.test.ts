@@ -13,31 +13,31 @@ import { State } from './../src';
 let alphabets = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
 let separator = '.';
 
-let createLevels = (levelCount: number): string[] => {
+function createLevels(levelCount: number): string[] {
   return alphabets.split('').slice(0, levelCount);
-};
+}
 
-let createNested = (levels: string[], countPerLevel: number): string[] => {
+function createAllKeys(levels: string[], countPerLevel: number): string[] {
   let subLength = levels.length;
   let last = levels[subLength - 1];
 
   if (subLength === 1) {
     return Numbers.range(0, countPerLevel).map(v => '' + last + v);
   } else {
-    let subNested = createNested(levels.slice(0, subLength - 1), countPerLevel);
-    let lastNested = createNested([last], countPerLevel);
+    let subKeys = createAllKeys(levels.slice(0, subLength - 1), countPerLevel);
+    let lastKeys = createAllKeys([last], countPerLevel);
 
-    return subNested
-      .map(v => lastNested.map(v1 => v + separator + v1))
+    return subKeys
+      .map(v => lastKeys.map(v1 => v + separator + v1))
       .reduce((a, b) => a.concat(b), []);
   }
-};
+}
 
-let createCombinations = (levels: string[], countPerLevel: number): JSObject<any> => {
-  let allCombinations: JSObject<any> = {};
-  let nestedKeys = createNested(levels, countPerLevel);
+function createCombinations(levels: string[], countPerLevel: number): JSObject<number> {
+  let allCombinations: JSObject<number> = {};
+  let allKeys = createAllKeys(levels, countPerLevel);
 
-  for (let key of nestedKeys) {
+  for (let key of allKeys) {
     let keyParts = key.split(separator);
     let keyLength = keyParts.length;
 
@@ -50,12 +50,12 @@ let createCombinations = (levels: string[], countPerLevel: number): JSObject<any
   }
 
   return allCombinations;
-};
+}
 
-let createState = (levels: string[], countPerLevel: number): State.Type<number> => {
+function createState(levels: string[], countPerLevel: number): State.Type<number> {
   let combinations = createCombinations(levels, countPerLevel);
   return State.empty<number>().updatingKeyValues(combinations);
-};
+}
 
 describe('State should be implemented correctly - fixed tests', () => {
   let levelCount: number;
@@ -73,33 +73,12 @@ describe('State should be implemented correctly - fixed tests', () => {
     initialState = State.empty<number>().updatingKeyValues(allCombinations);
   });
 
-  it('Separate path into substate and value paths - should work correctly', () => {
-    /// Setup
-    let sp = '.';
-    let path1 = 'should.be.correct';
-    let path2 = 'should';
-    let path3 = '';
-
-    /// When
-    let separated1 = State.separateSubstateAndValuePaths(path1, sp);
-    let separated2 = State.separateSubstateAndValuePaths(path2, sp);
-    let separated3 = State.separateSubstateAndValuePaths(path3, sp);
-
-    /// Then
-    expect(separated1[0]).not.toHaveLength(0);
-    expect(separated1[1]).not.toHaveLength(0);
-    expect(separated2[0]).toHaveLength(0);
-    expect(separated2[1]).not.toHaveLength(0);
-    expect(separated3[0]).toHaveLength(0);
-    expect(separated3[1]).toHaveLength(0);
-  });
-
   it('Create default state - should create correct number of values', () => {
     /// Setup
-    let nestedState = createNested(levelLetters, countPerLevel);
+    let allKeys = createAllKeys(levelLetters, countPerLevel);
 
     /// When & Then
-    expect(nestedState.length).toBe(countPerLevel ** levelLetters.length);
+    expect(allKeys.length).toBe(countPerLevel ** levelLetters.length);
   });
 
   it('Accessing value at node - should work correctly', () => {
@@ -140,11 +119,8 @@ describe('State should be implemented correctly - fixed tests', () => {
       let newState = initialState.updatingSubstate(key, state);
       let stateAtNode = newState.substateAtNode(key).value;
 
-      if (stateAtNode === undefined || stateAtNode === null) {
-        expect(state).toBeFalsy();
-      } else if (state !== undefined && state !== null) {
-        expect(stateAtNode.values).toEqual(state.values);
-      }
+      expect(stateAtNode).toBeTruthy();
+      expect(stateAtNode!.values).toEqual(state!.values);
     }
   });
 
@@ -199,15 +175,6 @@ describe('State should be implemented correctly - fixed tests', () => {
 
     /// Then
     expect(newState.valueAtNode(key).value).toBe(oldValue * 2 * 3 * 4);
-  });
-
-  it('Accessing substate/value with empty id - should work correctly', () => {
-    /// Setup
-    let state = State.empty();
-
-    /// When & Then
-    expect(state.substateAtNode('').isSuccess()).toBeTruthy();
-    expect(state.valueAtNode('').isFailure()).toBeTruthy();
   });
 });
 
@@ -282,6 +249,56 @@ describe('State should be implemented correctly - variable tests', () => {
     }
   });
 
+  it('Clone with substates at nodes - should work correctly', () => {
+    /**
+     * Start from 2 to skip case whereby key length is 1.
+     */
+    for (let i of Numbers.range(2, maxLevel)) {
+      /// Setup
+      let levels = createLevels(i);
+      let allKeys = createAllKeys(levels, countPerLevel);
+
+      let substateKeys = allKeys.map(v => {
+        return v.split('.').reverse().slice(1).reverse().join('.');
+      });
+
+      let state = createState(levels, countPerLevel);
+
+      /// When
+      let clonedState = state.cloneWithSubstatesAtNodes(...substateKeys);
+
+      /// Then
+      for (let substateKey of substateKeys) {
+        let originalSubstate = state.substateAtNode(substateKey);
+        let clonedSubstate = clonedState.substateAtNode(substateKey);
+        expect(originalSubstate.isSuccess()).toBeTruthy();
+        expect(clonedSubstate.isSuccess()).toBeTruthy();
+        expect(clonedSubstate.value).toEqual(originalSubstate.value);
+      }
+    }
+  });
+
+  it('Clone with values at nodes - should work correctly', () => {
+    for (let i of Numbers.range(1, maxLevel)) {
+      /// Setup
+      let levels = createLevels(i);
+      let allKeys = createAllKeys(levels, countPerLevel);
+      let state = createState(levels, countPerLevel);
+
+      /// When
+      let clonedState = state.cloneWithValuesAtNodes(...allKeys);
+
+      /// Then
+      for (let valueKey of allKeys) {
+        let originalValue = state.valueAtNode(valueKey);
+        let clonedValue = clonedState.valueAtNode(valueKey);
+        expect(originalValue.isSuccess()).toBeTruthy();
+        expect(clonedValue.isSuccess()).toBeTruthy();
+        expect(clonedValue.value).toEqual(originalValue.value);
+      }
+    }
+  });
+
   it('Create single branches - should work correctly', () => {
     for (let i of Numbers.range(1, maxLevel)) {
       /// Setup
@@ -323,69 +340,5 @@ describe('State should be implemented correctly - variable tests', () => {
       /// Then
       expect(reconstructed.equals(state, (v1, v2) => v1 === v2)).toBeTruthy();
     }
-  });
-});
-
-describe('State\'s instanceAtNode should be implemented correctly', () => {
-  class A { constructor() { } }
-
-  let state = State.empty<A>()
-    .updatingValue('1.2.3', new A())
-    .updatingValue('1.2.3.4', new A());
-
-  it('instanceAtNode should be implemented correctly', () => {
-    /// Setup
-    let instance = state.instanceAtNode(A, '1.2.3');
-
-    /// When & Then
-    expect(instance.isSuccess()).toBeTruthy();
-  });
-});
-
-describe('State construction should be implemented correctly', () => {
-  it('State.fromState with undefined state - should work correctly', () => {
-    /// Setup
-    let state1: State.Type<any> = (({
-      values: undefined,
-      substate: undefined,
-    }) as any) as State.Type<any>;
-
-    /// When
-    let result = State.fromState(state1);
-
-    /// Then
-    expect(result.isEmpty()).toBeTruthy();
-  });
-
-  it('State.fromKeyValue with undefined object - should work correctly', () => {
-    /// Setup
-    let state1 = undefined;
-
-    let state2: State.Type<any> = (({
-      values: undefined,
-      substate: undefined,
-    }) as any) as State.Type<any>;
-
-    /// When
-    let result1 = State.fromKeyValue(state1);
-    let result2 = State.fromKeyValue(state2);
-
-    /// Then
-    [result1, result2].forEach(v => expect(v.isEmpty()).toBeTruthy());
-  });
-});
-
-describe('State should be immutable', () => {
-  let state = State.empty<any>()
-    .updatingValue('a', 1)
-    .updatingValue('a.b.c', 2)
-    .updatingValue('a.b.d', 3);
-
-  it('Setting values directly - should not mutate state', () => {
-    /// Setup & When
-    state.values.a = '2';
-
-    /// Then
-    expect(state.valueAtNode('a').value).not.toBe(2);
   });
 });

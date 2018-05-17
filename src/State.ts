@@ -39,6 +39,11 @@ export function separateSubstateAndValuePaths(path: string, sp: string): [string
   return last.map((v): [string, string] => [rest, v]).getOrElse(['', '']);
 }
 
+/**
+ * Get a new Builder.
+ * @template T Generics parameter.
+ * @returns {Builder<T>} A Builder instance.
+ */
 export function builder<T>(): Builder<T> {
   return new Builder();
 }
@@ -122,6 +127,8 @@ export interface Type<T> extends BuildableType<Builder<T>> {
   removingValue(id: string): Type<T>;
   updatingSubstate(id: string, ss: Nullable<Type<T>>): Type<T>;
   removingSubstate(id: string): Type<T>;
+  cloneWithSubstatesAtNodes(...ids: string[]): Type<T>;
+  cloneWithValuesAtNodes(...ids: string[]): Type<T>;
   emptying(): Type<T>;
   flatten(): JSObject<any>;
   levelCount(): number;
@@ -315,7 +322,7 @@ class Self<T> implements Type<T> {
     if (length === 1) {
       /// If the id is an empty string, return the current state.
       return first
-        .map(v => v.length === 0 ? this : Try.unwrap(this.substate[v]))
+        .map(v => Try.unwrap(this.substate[v]))
         .map(v => Try.unwrap(v))
         .flatMap(v => v.mapError(() => `No substate at ${original}`));
     } else {
@@ -522,6 +529,7 @@ class Self<T> implements Type<T> {
 
       return first
         .flatMap(v => Try.unwrap(this._substate[v]))
+        .catchError(() => empty<T>())
         .zipWith(subId, (v1, v2) => v1.updatingSubstate(v2, ss))
         .zipWith(first, (v1, v2) => this.updatingSubstate(v2, v1))
         .getOrElse(this);
@@ -538,10 +546,48 @@ class Self<T> implements Type<T> {
   }
 
   /**
+   * Clone the current State, but only include the substates found at the
+   * specified nodes.
+   * @param {...string[]} ids A varargs of id.
+   * @returns {Type<T>} A Type instance.
+   */
+  public cloneWithSubstatesAtNodes(...ids: string[]): Type<T> {
+    let state = empty<T>();
+
+    for (let id of ids) {
+      this.substateAtNode(id).doOnNext(v => {
+        state = state.updatingSubstate(id, v);
+      });
+    }
+
+    return state;
+  }
+
+  /**
+   * Clone the current State, but only include the values found at the specified
+   * nodes.
+   * @param {...string[]} ids A varargs of id.
+   * @returns {Type<T>} A Type instance.
+   */
+  public cloneWithValuesAtNodes(...ids: string[]): Type<T> {
+    let state = empty<T>();
+
+    for (let id of ids) {
+      this.valueAtNode(id).doOnNext(v => {
+        state = state.updatingValue(id, v);
+      });
+    }
+
+    return state;
+  }
+
+  /**
    * Empty the current state.
    * @returns {Type<T>} A Type instance.
    */
-  public emptying = (): Type<T> => empty();
+  public emptying(): Type<T> {
+    return empty();
+  }
 
   /**
    * Flatten the current state to a key-value object. If we want a JSON of the
