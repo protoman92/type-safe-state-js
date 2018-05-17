@@ -136,7 +136,8 @@ export interface Type<T> extends BuildableType<Builder<T>> {
   forEach(selector: ForEach<T>): void;
   mappingEach<R>(selector: MapFn<T, R>): Type<R>;
   createSingleBranches(): Type<T>[];
-  equals(state: Nullable<StateType<T>>, fn: (v1: T, v2: T) => boolean): boolean;
+  equals(state: Nullable<StateType<T>>): boolean;
+  equalsForKeys(state: Nullable<StateType<T>>, ...ids: string[]): boolean;
 }
 
 /**
@@ -765,10 +766,9 @@ class Self<T> implements Type<T> {
   /**
    * Check if the current state equals another state.
    * @param {StateType<JSObject<any>>} object A JSObject instance.
-   * @param {(v1: T, v2: T) => boolean} fn Compare function.
    * @returns {boolean} A boolean value.
    */
-  public equals(object: Nullable<StateType<any>>, fn: (v1: T, v2: T) => boolean): boolean {
+  public equals(object: Nullable<StateType<any>>): boolean {
     if (object !== undefined && object !== null) {
       let state = fromKeyValue(object);
       let thisValues = this._values;
@@ -786,7 +786,7 @@ class Self<T> implements Type<T> {
           if (
             v1 !== undefined && v1 !== null &&
             v2 !== undefined && v2 !== null &&
-            fn(v1, v2)
+            v1 === v2
           ) {
             continue;
           } else if (v1 === undefined && v2 === undefined) {
@@ -808,7 +808,7 @@ class Self<T> implements Type<T> {
         if (
           v1 !== undefined && v1 !== null &&
           v2 !== undefined && v2 !== null &&
-          v1.equals(v2, fn)
+          v1.equals(v2)
         ) {
           continue;
         } else if (v1 === undefined && v2 === undefined) {
@@ -824,6 +824,24 @@ class Self<T> implements Type<T> {
     } else {
       return false;
     }
+  }
+
+  /**
+   * Check if two State are equal for the specified keys.
+   * @param {Nullable<StateType<T>>} state A StateType instance.
+   * @param {...string[]} ids A varargs of keys.
+   * @returns {boolean} A boolean value.
+   */
+  public equalsForKeys(state: Nullable<StateType<T>>, ...ids: string[]): boolean {
+    let parsedState = fromKeyValue(state);
+
+    for (let id of ids) {
+      if (parsedState.valueAtNode(id).value !== this.valueAtNode(id).value) {
+        return false;
+      }
+    }
+
+    return true;
   }
 }
 

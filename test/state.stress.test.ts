@@ -144,11 +144,10 @@ describe('State should be implemented correctly - fixed tests', () => {
     /// Setup
     let flattened1 = <State.Type<number>>(initialState.flatten());
     let flattened2 = JSON.parse(JSON.stringify(initialState));
-    let compareFn: (v1: number, v2: number) => boolean = (v1, v2) => v1 === v2;
 
     /// When & Then
-    expect(initialState.equals(flattened1, compareFn)).toBeTruthy();
-    expect(initialState.equals(flattened2, compareFn)).toBeTruthy();
+    expect(initialState.equals(flattened1)).toBeTruthy();
+    expect(initialState.equals(flattened2)).toBeTruthy();
   });
 
   it('Flatten state - should work correctly', () => {
@@ -296,6 +295,8 @@ describe('State should be implemented correctly - variable tests', () => {
         expect(clonedValue.isSuccess()).toBeTruthy();
         expect(clonedValue.value).toEqual(originalValue.value);
       }
+
+      expect(clonedState.equalsForKeys(state, ...allKeys)).toBeTruthy();
     }
   });
 
@@ -338,7 +339,7 @@ describe('State should be implemented correctly - variable tests', () => {
       let reconstructed = State.fromKeyValue(flattened);
 
       /// Then
-      expect(reconstructed.equals(state, (v1, v2) => v1 === v2)).toBeTruthy();
+      expect(reconstructed.equals(state)).toBeTruthy();
     }
   });
 });
