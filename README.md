@@ -1,9 +1,9 @@
 # type-safe-state-js
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![npm version](https://badge.fury.io/js/type-safe-state-js.svg)](https://badge.fury.io/js/type-safe-state-js)
-[![Build Status](https://travis-ci.org/protoman92/type-safe-state-js.svg?branch=master)](https://travis-ci.org/protoman92/type-safe-state-js)
-[![Coverage Status](https://coveralls.io/repos/github/protoman92/type-safe-state-js/badge.svg?branch=master)](https://coveralls.io/github/protoman92/type-safe-state-js?branch=master)
+[![npm version](https://badge.fury.io/js/type-safe-state-js.svg?dummy=false)](https://badge.fury.io/js/type-safe-state-js?dummy=false)
+[![Build Status](https://travis-ci.org/protoman92/type-safe-state-js.svg?branch=master&dummy=false)](https://travis-ci.org/protoman92/type-safe-state-js?dummy=false)
+[![Coverage Status](https://coveralls.io/repos/github/protoman92/type-safe-state-js/badge.svg?branch=master&dummy=false)](https://coveralls.io/github/protoman92/type-safe-state-js?branch=master&dummy=false)
 
 ### REACT NATIVE USERS, PLEASE READ THIS FIRST: ###
 
