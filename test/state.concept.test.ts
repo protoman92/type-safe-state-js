@@ -53,7 +53,7 @@ describe('Nominal state tests', () => {
     });
 
     /// When
-    let clonedState = state.cloneWithSubstatesAtNodes('a', 'b');
+    let clonedState = state.cloningWithSubstatesAtNodes('a', 'b');
 
     /// Then
     expect(clonedState.flatten()).toEqual(state.flatten());

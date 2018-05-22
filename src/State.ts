@@ -123,12 +123,16 @@ export interface Type<T> extends BuildableType<Builder<T>> {
   instanceAtNode<R>(ctor: new () => R, id: string): Try<R>;
   mappingValue(id: string, fn: UpdateFn<T>): Type<T>;
   updatingValue(id: string, value: Nullable<T>): Type<T>;
+  copyingValue(src: string, dest: string): Type<T>;
+  movingValue(src: string, dest: string): Type<T>;
   updatingKeyValues(values: JSObject<T>): Type<T>;
   removingValue(id: string): Type<T>;
   updatingSubstate(id: string, ss: Nullable<Type<T>>): Type<T>;
   removingSubstate(id: string): Type<T>;
-  cloneWithSubstatesAtNodes(...ids: string[]): Type<T>;
-  cloneWithValuesAtNodes(...ids: string[]): Type<T>;
+  copyingSubstate(src: string, dest: string): Type<T>;
+  movingSubstate(src: string, dest: string): Type<T>;
+  cloningWithSubstatesAtNodes(...ids: string[]): Type<T>;
+  cloningWithValuesAtNodes(...ids: string[]): Type<T>;
   emptying(): Type<T>;
   flatten(): JSObject<any>;
   levelCount(): number;
@@ -446,7 +450,7 @@ class Self<T> implements Type<T> {
    * create whatever substate that is not present.
    * @param {string} id A string value.
    * @param {UpdateFn<T>} fn Selector function.
-   * @returns {Type<T>} A State instance.
+   * @returns {Type<T>} A Type instance.
    */
   public mappingValue(id: string, fn: UpdateFn<T>): Type<T> {
     let separator = this.substateSeparator;
@@ -474,7 +478,7 @@ class Self<T> implements Type<T> {
    * Update the value at some node, ignoring the old value.
    * @param {string} id A string value.
    * @param {Nullable<T>} value T object.
-   * @returns {Type} A State instance.
+   * @returns {Type} A Type instance.
    */
   public updatingValue(id: string, value: Nullable<T>): Type<T> {
     let updateFn: UpdateFn<T> = () => {
@@ -487,7 +491,7 @@ class Self<T> implements Type<T> {
   /**
    * Update all values from some key-value object.
    * @param {JSObject<T>} values A JSObject instance.
-   * @returns {Type<T>} A State instance.
+   * @returns {Type<T>} A Type instance.
    */
   public updatingKeyValues(values: JSObject<T>): Type<T> {
     let state = this.cloneBuilder().build();
@@ -502,10 +506,31 @@ class Self<T> implements Type<T> {
   /**
    * Remove the value at some node.
    * @param {string} id A string value.
-   * @returns {Type<T>} A State instance.
+   * @returns {Type<T>} A Type instance.
    */
   public removingValue(id: string): Type<T> {
     return this.updatingValue(id, undefined);
+  }
+
+  /**
+   * Copy value from one node to another.
+   * @param {string} src A string value.
+   * @param {string} dest A string value.
+   * @returns {Type<T>} A Type instance.
+   */
+  public copyingValue(src: string, dest: string): Type<T> {
+    let sourceValue = this.valueAtNode(src);
+    return this.updatingValue(dest, sourceValue.value);
+  }
+
+  /**
+   * Move value from one node to another.
+   * @param {string} src A string value.
+   * @param {string} dest A string value.
+   * @returns {Type<T>} A Type instance.
+   */
+  public movingValue(src: string, dest: string): Type<T> {
+    return this.copyingValue(src, dest).removingValue(src);
   }
 
   /**
@@ -513,7 +538,7 @@ class Self<T> implements Type<T> {
    * substate.
    * @param {string} id A string value.
    * @param {Nullable<Type<T>>} ss A Type instance.
-   * @returns {Type<T>} A State instance.
+   * @returns {Type<T>} A Type instance.
    */
   public updatingSubstate(id: string, ss: Nullable<Type<T>>): Type<T> {
     let separator = this.substateSeparator;
@@ -547,12 +572,33 @@ class Self<T> implements Type<T> {
   }
 
   /**
+   * Copy substate from one node to another.
+   * @param {string} src A string value.
+   * @param {string} dest A string value.
+   * @returns {Type<T>} A Type instance.
+   */
+  public copyingSubstate(src: string, dest: string): Type<T> {
+    let sourceSubstate = this.substateAtNode(src);
+    return this.updatingSubstate(dest, sourceSubstate.value);
+  }
+
+  /**
+   * Move substate from one node to another.
+   * @param {string} src A string value.
+   * @param {string} dest A string value.
+   * @returns {Type<T>} A Type instance.
+   */
+  public movingSubstate(src: string, dest: string): Type<T> {
+    return this.copyingSubstate(src, dest).removingSubstate(src);
+  }
+
+  /**
    * Clone the current State, but only include the substates found at the
    * specified nodes.
    * @param {...string[]} ids A varargs of id.
    * @returns {Type<T>} A Type instance.
    */
-  public cloneWithSubstatesAtNodes(...ids: string[]): Type<T> {
+  public cloningWithSubstatesAtNodes(...ids: string[]): Type<T> {
     let state = empty<T>();
 
     for (let id of ids) {
@@ -570,7 +616,7 @@ class Self<T> implements Type<T> {
    * @param {...string[]} ids A varargs of id.
    * @returns {Type<T>} A Type instance.
    */
-  public cloneWithValuesAtNodes(...ids: string[]): Type<T> {
+  public cloningWithValuesAtNodes(...ids: string[]): Type<T> {
     let state = empty<T>();
 
     for (let id of ids) {

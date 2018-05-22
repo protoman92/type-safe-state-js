@@ -255,16 +255,15 @@ describe('State should be implemented correctly - variable tests', () => {
     for (let i of Numbers.range(2, maxLevel)) {
       /// Setup
       let levels = createLevels(i);
-      let allKeys = createAllKeys(levels, countPerLevel);
 
-      let substateKeys = allKeys.map(v => {
+      let substateKeys = createAllKeys(levels, countPerLevel).map(v => {
         return v.split('.').reverse().slice(1).reverse().join('.');
       });
 
       let state = createState(levels, countPerLevel);
 
       /// When
-      let clonedState = state.cloneWithSubstatesAtNodes(...substateKeys);
+      let clonedState = state.cloningWithSubstatesAtNodes(...substateKeys);
 
       /// Then
       for (let substateKey of substateKeys) {
@@ -285,7 +284,7 @@ describe('State should be implemented correctly - variable tests', () => {
       let state = createState(levels, countPerLevel);
 
       /// When
-      let clonedState = state.cloneWithValuesAtNodes(...allKeys);
+      let clonedState = state.cloningWithValuesAtNodes(...allKeys);
 
       /// Then
       for (let valueKey of allKeys) {
@@ -340,6 +339,62 @@ describe('State should be implemented correctly - variable tests', () => {
 
       /// Then
       expect(reconstructed.equals(state)).toBeTruthy();
+    }
+  });
+
+  it('Move value from source to destination - should work', () => {
+    for (let i of Numbers.range(1, maxLevel)) {
+      /// Setup
+      let levels = createLevels(i);
+      let allKeys = createAllKeys(levels, countPerLevel);
+      let state = createState(levels, countPerLevel);
+
+      /// When
+      for (let src of allKeys) {
+        let dest = '';
+
+        while (dest === src) {
+          dest = Collections.randomElement(allKeys).value!;
+        }
+
+        let srcValue = state.valueAtNode(src).value;
+        let movedState = state.movingValue(src, dest);
+
+        /// Then
+        expect(movedState.valueAtNode(src).isSuccess()).toBeFalsy();
+        expect(movedState.valueAtNode(dest).isSuccess()).toBeTruthy();
+        expect(movedState.valueAtNode(dest).value).toEqual(srcValue);
+      }
+    }
+  });
+
+  it('Move substate from source to destination - should work', () => {
+    for (let i of Numbers.range(2, maxLevel)) {
+      /// Setup
+      let levels = createLevels(i);
+
+      let substateKeys = createAllKeys(levels, countPerLevel).map(v => {
+        return v.split('.').reverse().slice(1).reverse().join('.');
+      });
+
+      let state = createState(levels, countPerLevel);
+
+      /// When
+      for (let src of substateKeys) {
+        let dest = '';
+
+        while (dest === src) {
+          dest = Collections.randomElement(substateKeys).value!;
+        }
+
+        let srcSubstate = state.substateAtNode(src).value!;
+        let movedState = state.movingSubstate(src, dest);
+
+        /// Then
+        expect(movedState.substateAtNode(src).isSuccess()).toBeFalsy();
+        expect(movedState.substateAtNode(dest).isSuccess()).toBeTruthy();
+        expect(movedState.substateAtNode(dest).value!).toEqual(srcSubstate);
+      }
     }
   });
 });
