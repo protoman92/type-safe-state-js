@@ -122,6 +122,7 @@ export interface Type<T> extends BuildableType<Builder<T>> {
   numberAtNode(id: string): Try<number>;
   instanceAtNode<R>(ctor: new () => R, id: string): Try<R>;
   mappingValue(id: string, fn: UpdateFn<T>): Type<T>;
+  mappingEach<R>(selector: MapFn<T, R>): Type<R>;
   updatingValue(id: string, value: Nullable<T>): Type<T>;
   copyingValue(src: string, dest: string): Type<T>;
   movingValue(src: string, dest: string): Type<T>;
@@ -138,8 +139,8 @@ export interface Type<T> extends BuildableType<Builder<T>> {
   levelCount(): number;
   totalValueCount(): number;
   forEach(selector: ForEach<T>): void;
-  mappingEach<R>(selector: MapFn<T, R>): Type<R>;
   createSingleBranches(): Type<T>[];
+  valuesWithFullPaths(): JSObject<T>;
   equals(state: Nullable<StateType<T>>): boolean;
 
   equalsForValues(
@@ -818,6 +819,28 @@ class Self<T> implements Type<T> {
    */
   public createSingleBranches = (): Type<T>[] => {
     return this._createSingleBranches(undefined).map(v => v[1]);
+  }
+
+  /**
+   * Get all values with their respective paths that are joined in full.
+   * @returns {JSObject<T>} A JSObject instance.
+   */
+  public valuesWithFullPaths(): JSObject<T> {
+    let separator = this.substateSeparator;
+
+    let substateValues = Objects.entries(this.substate)
+      .map(v => {
+        let mainKey = v[0];
+        let values = v[1].valuesWithFullPaths();
+        let valueKeys = Object.keys(values);
+
+        return valueKeys
+          .map(v1 => ({ [`${mainKey}${separator}${v1}`]: values[v1] }))
+          .reduce((acc, v1) => Object.assign({}, acc, v1), {});
+      })
+      .reduce((acc, v) => Object.assign({}, acc, v), {});
+
+    return Object.assign({}, substateValues, this.values);
   }
 
   /**

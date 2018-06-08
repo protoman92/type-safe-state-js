@@ -53,8 +53,7 @@ function createCombinations(levels: string[], countPerLevel: number): JSObject<n
   return allCombinations;
 }
 
-function createState(levels: string[], countPerLevel: number): State.Type<number> {
-  let combinations = createCombinations(levels, countPerLevel);
+function createState(combinations: JSObject<number>): State.Type<number> {
   return State.empty<number>().updatingKeyValues(combinations);
 }
 
@@ -187,7 +186,7 @@ describe('State should be implemented correctly - variable tests', () => {
       /// Setup
       let levels = createLevels(i);
       let allCombinations = createCombinations(levels, countPerLevel);
-      let state = createState(levels, countPerLevel);
+      let state = createState(allCombinations);
 
       /// When
       let valueCount = state.totalValueCount();
@@ -201,7 +200,8 @@ describe('State should be implemented correctly - variable tests', () => {
     for (let i of Numbers.range(1, maxLevel)) {
       /// Setup
       let levels = createLevels(i);
-      let state = createState(levels, countPerLevel);
+      let allCombinations = createCombinations(levels, countPerLevel);
+      let state = createState(allCombinations);
 
       /// When
       let levelCount = state.levelCount();
@@ -222,9 +222,9 @@ describe('State should be implemented correctly - variable tests', () => {
 
     for (let i of Numbers.range(1, maxLevel)) {
       let levels = createLevels(i);
-      let combinations = createCombinations(levels, countPerLevel);
-      let allEntries = Objects.entries(combinations);
-      let state = createState(levels, countPerLevel);
+      let allCombinations = createCombinations(levels, countPerLevel);
+      let allEntries = Objects.entries(allCombinations);
+      let state = createState(allCombinations);
       let levelNumbers: number[] = [];
       let paths: Try<string>[] = [];
       let values: number[] = [];
@@ -261,7 +261,8 @@ describe('State should be implemented correctly - variable tests', () => {
         return v.split('.').reverse().slice(1).reverse().join('.');
       });
 
-      let state = createState(levels, countPerLevel);
+      let allCombinations = createCombinations(levels, countPerLevel);
+      let state = createState(allCombinations);
 
       /// When
       let clonedState = state.cloningWithSubstatesAtNodes(...substateKeys);
@@ -285,7 +286,8 @@ describe('State should be implemented correctly - variable tests', () => {
       /// Setup
       let levels = createLevels(i);
       let allKeys = createAllKeys(levels, countPerLevel);
-      let state = createState(levels, countPerLevel);
+      let allCombinations = createCombinations(levels, countPerLevel);
+      let state = createState(allCombinations);
 
       /// When
       let clonedState = state.cloningWithValuesAtNodes(...allKeys);
@@ -308,7 +310,8 @@ describe('State should be implemented correctly - variable tests', () => {
     for (let i of Numbers.range(1, maxLevel)) {
       /// Setup
       let levels = createLevels(i);
-      let state = createState(levels, countPerLevel);
+      let allCombinations = createCombinations(levels, countPerLevel);
+      let state = createState(allCombinations);
       let sep = state.substateSeparator;
 
       /// When
@@ -336,7 +339,8 @@ describe('State should be implemented correctly - variable tests', () => {
     for (let i of Numbers.range(1, maxLevel)) {
       /// Setup
       let levels = createLevels(i);
-      let state = createState(levels, countPerLevel);
+      let allCombinations = createCombinations(levels, countPerLevel);
+      let state = createState(allCombinations);
 
       /// When
       let flattened = state.flatten();
@@ -352,7 +356,8 @@ describe('State should be implemented correctly - variable tests', () => {
       /// Setup
       let levels = createLevels(i);
       let allKeys = createAllKeys(levels, countPerLevel);
-      let state = createState(levels, countPerLevel);
+      let allCombinations = createCombinations(levels, countPerLevel);
+      let state = createState(allCombinations);
 
       /// When
       for (let src of allKeys) {
@@ -382,7 +387,8 @@ describe('State should be implemented correctly - variable tests', () => {
         return v.split('.').reverse().slice(1).reverse().join('.');
       });
 
-      let state = createState(levels, countPerLevel);
+      let allCombinations = createCombinations(levels, countPerLevel);
+      let state = createState(allCombinations);
 
       /// When
       for (let src of substateKeys) {
