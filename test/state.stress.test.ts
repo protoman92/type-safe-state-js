@@ -196,6 +196,21 @@ describe('State should be implemented correctly - variable tests', () => {
     }
   });
 
+  it('Finding values with matching keys - should be implemented correctly', () => {
+    for (let i of Numbers.range(1, maxLevel)) {
+      /// Setup
+      let levels = createLevels(i);
+      let allCombinations = createCombinations(levels, countPerLevel);
+      let state = createState(allCombinations);
+
+      /// When
+      let matchingValues = state.valuesForMatchingPaths(v => v.length > 0);
+
+      /// Then
+      expect(deepEqual(matchingValues, allCombinations)).toBeTruthy();
+    }
+  });
+
   it('State total value count should be implemented correctly', () => {
     for (let i of Numbers.range(1, maxLevel)) {
       /// Setup

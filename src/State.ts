@@ -139,6 +139,7 @@ export interface Type<T> extends BuildableType<Builder<T>> {
   levelCount(): number;
   totalValueCount(): number;
   forEach(selector: ForEach<T>): void;
+  valuesForMatchingPaths(keyMatcher: (key: string) => boolean): JSObject<T>;
   createSingleBranches(): Type<T>[];
   valuesWithFullPaths(): JSObject<T>;
   equals(state: Nullable<StateType<T>>): boolean;
@@ -737,6 +738,20 @@ class Self<T> implements Type<T> {
   }
 
   /**
+   * Find all values whose full paths matches some conditions.
+   * @param {(key: string) => boolean} pathMatcher The selector function.
+   * @returns {JSObject<T>} A JSObject instance.
+   */
+  public valuesForMatchingPaths(pathMatcher: (key: string) => boolean): JSObject<T> {
+    let keyValues = this.valuesWithFullPaths();
+
+    return Object.keys(keyValues)
+      .filter(v => pathMatcher(v))
+      .map(v => ({ [v]: keyValues[v] }))
+      .reduce((acc, v) => Object.assign(acc, v), {});
+  }
+
+  /**
    * Map all values in the current state to a different type.
    * @param {MapFn<T, R>} selector Selector function.
    * @returns {Type<R>} A Type instance.
@@ -836,11 +851,11 @@ class Self<T> implements Type<T> {
 
         return valueKeys
           .map(v1 => ({ [`${mainKey}${separator}${v1}`]: values[v1] }))
-          .reduce((acc, v1) => Object.assign({}, acc, v1), {});
+          .reduce((acc, v1) => Object.assign(acc, v1), {});
       })
-      .reduce((acc, v) => Object.assign({}, acc, v), {});
+      .reduce((acc, v) => Object.assign(acc, v), {});
 
-    return Object.assign({}, substateValues, this.values);
+    return Object.assign(substateValues, this.values);
   }
 
   /**
