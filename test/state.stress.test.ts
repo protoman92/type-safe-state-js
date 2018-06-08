@@ -181,6 +181,21 @@ describe('State should be implemented correctly - variable tests', () => {
   let countPerLevel = 3;
   let maxLevel = 8;
 
+  it('Full value paths should be implemented correctly', () => {
+    for (let i of Numbers.range(1, maxLevel)) {
+      /// Setup
+      let levels = createLevels(i);
+      let allCombinations = createCombinations(levels, countPerLevel);
+      let state = createState(allCombinations);
+
+      /// When
+      let fullValuePaths = state.valuesWithFullPaths();
+
+      /// Then
+      expect(deepEqual(fullValuePaths, allCombinations)).toBeTruthy();
+    }
+  });
+
   it('State total value count should be implemented correctly', () => {
     for (let i of Numbers.range(1, maxLevel)) {
       /// Setup
