@@ -1,6 +1,6 @@
 {
   "name": "type-safe-state-js",
-  "version": "1.2.2",
+  "version": "1.2.3",
   "description": "Functional, type-safe nested state object.",
   "main": "./dist/src/index.js",
   "types": "./dist/src/index.d.ts",
@@ -32,8 +32,10 @@
     "javascriptutilities": "^1.4.7"
   },
   "devDependencies": {
+    "@types/deep-equal": "^1.0.1",
     "@types/jest": "^21.1.6",
     "coveralls": "^3.0.0",
+    "deep-equal": "^1.0.1",
     "jest": "^21.2.1",
     "ts-jest": "^21.2.3"
   }

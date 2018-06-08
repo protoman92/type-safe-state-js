@@ -141,7 +141,18 @@ export interface Type<T> extends BuildableType<Builder<T>> {
   mappingEach<R>(selector: MapFn<T, R>): Type<R>;
   createSingleBranches(): Type<T>[];
   equals(state: Nullable<StateType<T>>): boolean;
-  equalsForKeys(state: Nullable<StateType<T>>, ...ids: string[]): boolean;
+
+  equalsForValues(
+    state: Nullable<StateType<T>>,
+    keys: string[],
+    equalFn?: (v1: T, v2: T) => boolean,
+  ): boolean;
+
+  equalsForSubstates(
+    state: Nullable<StateType<T>>,
+    keys: string[],
+    equalFn?: (v1: Type<T>, v2: Type<T>) => boolean,
+  ): boolean;
 }
 
 /**
@@ -873,16 +884,57 @@ class Self<T> implements Type<T> {
   }
 
   /**
-   * Check if two State are equal for the specified keys.
+   * Check if two State are equal in values for the specified keys.
    * @param {Nullable<StateType<T>>} state A StateType instance.
-   * @param {...string[]} ids A varargs of keys.
+   * @param {string[]} keys An Array of keys.
+   * @param {(v1: T, v2: T) => boolean} [equalFn] Optional compare function.
    * @returns {boolean} A boolean value.
    */
-  public equalsForKeys(state: Nullable<StateType<T>>, ...ids: string[]): boolean {
+  public equalsForValues(
+    state: Nullable<StateType<T>>,
+    keys: string[],
+    equalFn?: (v1: T, v2: T) => boolean,
+  ): boolean {
+    let compareFn = equalFn !== undefined && equalFn !== null ? equalFn
+      : (v1: T, v2: T): boolean => v1 === v2;
+
     let parsedState = fromKeyValue(state);
 
-    for (let id of ids) {
-      if (parsedState.valueAtNode(id).value !== this.valueAtNode(id).value) {
+    for (let key of keys) {
+      if (!parsedState.valueAtNode(key)
+        .zipWith(this.valueAtNode(key), (v1, v2) => compareFn(v1, v2))
+        .getOrElse(false)
+      ) {
+        return false;
+      }
+    }
+
+    return true;
+  }
+
+  /**
+   * Check if two State are equal in substates for the specified keys.
+   * @param {Nullable<StateType<T>>} state A StateType instance.
+   * @param {string[]} keys An Array of keys.
+   * @param {(v1: Type<T>, v2: Type<T>) => boolean} [equalFn] Optional compare
+   * function.
+   * @returns {boolean} A boolean value.
+   */
+  public equalsForSubstates(
+    state: Nullable<StateType<T>>,
+    keys: string[],
+    equalFn?: (v1: Type<T>, v2: Type<T>) => boolean,
+  ): boolean {
+    let compareFn = equalFn !== undefined && equalFn !== null ? equalFn
+      : (v1: Type<T>, v2: Type<T>): boolean => v1.equals(v2);
+
+    let parsedState = fromKeyValue(state);
+
+    for (let key of keys) {
+      if (!parsedState.substateAtNode(key)
+        .zipWith(this.substateAtNode(key), (v1, v2) => compareFn(v1, v2))
+        .getOrElse(false)
+      ) {
         return false;
       }
     }

@@ -9,6 +9,7 @@ import {
 } from 'javascriptutilities';
 
 import { State } from './../src';
+import deepEqual from 'deep-equal';
 
 let alphabets = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
 let separator = '.';
@@ -273,6 +274,9 @@ describe('State should be implemented correctly - variable tests', () => {
         expect(clonedSubstate.isSuccess()).toBeTruthy();
         expect(clonedSubstate.value).toEqual(originalSubstate.value);
       }
+
+      expect(clonedState.equalsForSubstates(state, substateKeys)).toBeTruthy();
+      expect(clonedState.equalsForSubstates(state, substateKeys, deepEqual)).toBeTruthy();
     }
   });
 
@@ -295,7 +299,8 @@ describe('State should be implemented correctly - variable tests', () => {
         expect(clonedValue.value).toEqual(originalValue.value);
       }
 
-      expect(clonedState.equalsForKeys(state, ...allKeys)).toBeTruthy();
+      expect(clonedState.equalsForValues(state, allKeys)).toBeTruthy();
+      expect(clonedState.equalsForValues(state, allKeys, (v1, v2) => v1 === v2)).toBeTruthy();
     }
   });
 
