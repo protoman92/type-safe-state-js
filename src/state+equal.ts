@@ -114,7 +114,7 @@ Impl.prototype.equalsForValues = function <T>(
     let lhsValue = this.valueAtNode(key);
     let rhsValue = parsedState.valueAtNode(key);
 
-    if (lhsValue.isFailure() === rhsValue.isFailure()) {
+    if (lhsValue.isFailure() && rhsValue.isFailure()) {
       continue;
     } else if (!lhsValue
       .zipWith(rhsValue, (v1, v2) => compareFn(v1, v2))
@@ -141,7 +141,7 @@ Impl.prototype.equalsForSubstates = function <T>(
     let lhsValue = this.substateAtNode(key);
     let rhsValue = parsedState.substateAtNode(key);
 
-    if (lhsValue.isFailure() === rhsValue.isFailure()) {
+    if (lhsValue.isFailure() && rhsValue.isFailure()) {
       continue;
     } else if (!lhsValue
       .zipWith(rhsValue, (v1, v2) => compareFn(v1, v2))
