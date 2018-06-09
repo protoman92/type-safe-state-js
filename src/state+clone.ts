@@ -33,7 +33,7 @@ Impl.prototype.cloningWithSubstatesAtNodes = function <T>(...paths: string[]): T
   }
 
   return state;
-}
+};
 
 Impl.prototype.cloningWithValuesAtNodes = function <T>(...paths: string[]): Type<T> {
   let state = empty<T>();
@@ -45,4 +45,4 @@ Impl.prototype.cloningWithValuesAtNodes = function <T>(...paths: string[]): Type
   }
 
   return state;
-}
+};

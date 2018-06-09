@@ -72,14 +72,14 @@ Impl.prototype.firstValue = function <T>(): Try<T> {
     .first(Objects.entries(this._values))
     .map(v => v[0])
     .flatMap(v => this.valueAtNode(v));
-}
+};
 
 Impl.prototype.firstSubstate = function <T>(): Try<Type<T>> {
   return Collections
     .first(Objects.entries(this._substate))
     .map(v => v[0])
     .flatMap(v => this.substateAtNode(v));
-}
+};
 
 Impl.prototype._substateAtNode = function <T>(path: string, original: string): Try<Type<T>> {
   let separator = this.substateSeparator;
@@ -101,11 +101,11 @@ Impl.prototype._substateAtNode = function <T>(path: string, original: string): T
         .map(v1 => v1._substateAtNode(v[0], original)))
       .flatMap(v => v.flatMap(v1 => v1));
   }
-}
+};
 
 Impl.prototype.substateAtNode = function <T>(path: string): Try<Type<T>> {
   return this._substateAtNode(path, path);
-}
+};
 
 Impl.prototype._valueAtNode = function <T>(path: string, original: string): Try<T> {
   let separator = this.substateSeparator;
@@ -124,11 +124,11 @@ Impl.prototype._valueAtNode = function <T>(path: string, original: string): Try<
         .map(v1 => v1._valueAtNode(v[0], original)))
       .flatMap(v => v.flatMap(v1 => v1));
   }
-}
+};
 
 Impl.prototype.valueAtNode = function <T>(path: string): Try<T> {
   return this._valueAtNode(path, path);
-}
+};
 
 Impl.prototype.stringAtNode = function (path: string): Try<string> {
   return this.valueAtNode(path).map(v => {
@@ -138,7 +138,7 @@ Impl.prototype.stringAtNode = function (path: string): Try<string> {
       throw Error(`No string at ${path}`);
     }
   });
-}
+};
 
 Impl.prototype.booleanAtNode = function (path: string): Try<boolean> {
   return this.valueAtNode(path).map(v => {
@@ -148,7 +148,7 @@ Impl.prototype.booleanAtNode = function (path: string): Try<boolean> {
       throw Error(`No boolean at ${path}`);
     }
   });
-}
+};
 
 Impl.prototype.numberAtNode = function (path: string): Try<number> {
   return this.valueAtNode(path).map(v => {
@@ -158,7 +158,7 @@ Impl.prototype.numberAtNode = function (path: string): Try<number> {
       throw Error(`No number at ${path}`);
     }
   });
-}
+};
 
 Impl.prototype.instanceAtNode = function <R>(ctor: new () => R, path: string): Try<R> {
   return this.valueAtNode(path).map(v => {
@@ -168,4 +168,4 @@ Impl.prototype.instanceAtNode = function <R>(ctor: new () => R, path: string): T
       throw Error(`No ${ctor.name} at ${path}`);
     }
   });
-}
+};

@@ -91,21 +91,21 @@ declare module './state+main' {
      * identifies a substate in this._substates.
      * @returns {[string, Type<T>][]} An Array of state.
      */
-    _createSingleBranches(ssKey: Nullable<string>): [string, Type<T>][]
+    _createSingleBranches(ssKey: Nullable<string>): [string, Type<T>][];
   }
 }
 
 Impl.prototype.hasValues = function (): boolean {
   return Object.keys(this._values).length > 0;
-}
+};
 
 Impl.prototype.hasSubstate = function (): boolean {
   return Object.keys(this._substate).length > 0;
-}
+};
 
 Impl.prototype.isEmpty = function (): boolean {
   return !(this.hasValues() && this.hasSubstate());
-}
+};
 
 Impl.prototype.levelCount = function (): number {
   return Try.success(Objects.entries(this._substate))
@@ -115,7 +115,7 @@ Impl.prototype.levelCount = function (): number {
     .map(v => v.map(v1 => v1.levelCount()))
     .flatMap(v => Try.unwrap(Math.max(...v)))
     .getOrElse(0) + 1;
-}
+};
 
 Impl.prototype.totalValueCount = function (): number {
   let valueCount = Objects.entries(this._values).length;
@@ -128,7 +128,7 @@ Impl.prototype.totalValueCount = function (): number {
     .getOrElse(0);
 
   return valueCount + ssValueCount;
-}
+};
 
 Impl.prototype.flatten = function (): JSObject<any> {
   let substates = Objects.entries(this._substate)
@@ -136,7 +136,7 @@ Impl.prototype.flatten = function (): JSObject<any> {
     .reduce((v1, v2) => Object.assign({}, v1, v2), {});
 
   return { [valuesKey]: this._values, [substateKey]: substates };
-}
+};
 
 Impl.prototype._forEach = function <T>(selector: ForEach<T>, ssPath: Try<string>, current: Nullable<number>): void {
   let separator = this.substateSeparator;
@@ -160,11 +160,11 @@ Impl.prototype._forEach = function <T>(selector: ForEach<T>, ssPath: Try<string>
       let newPath = Try.success(path);
       (fromState(v1[1]) as Impl<T>)._forEach(selector, newPath, newLevel);
     }));
-}
+};
 
 Impl.prototype.forEach = function <T>(selector: ForEach<T>): void {
   this._forEach(selector, Try.failure('No substate path for top state'), undefined);
-}
+};
 
 Impl.prototype.valuesForMatchingPaths = function <T>(pathMatcher: (key: string) => boolean): JSObject<T> {
   let keyValues = this.valuesWithFullPaths();
@@ -173,7 +173,7 @@ Impl.prototype.valuesForMatchingPaths = function <T>(pathMatcher: (key: string) 
     .filter(v => pathMatcher(v))
     .map(v => ({ [v]: keyValues[v] }))
     .reduce((acc, v) => Object.assign(acc, v), {});
-}
+};
 
 Impl.prototype._createSingleBranches = function <T>(ssKey: Nullable<string>): [string, Type<T>][] {
   let substateBranches = Try.success(Objects.entries(this._substate))
@@ -214,11 +214,11 @@ Impl.prototype._createSingleBranches = function <T>(ssKey: Nullable<string>): [s
       .map(v => empty<T>().updatingSubstate(v[0], v[1]))
       .map((v): [string, Type<T>] => ['', v]);
   }
-}
+};
 
 Impl.prototype.createSingleBranches = function <T>(): Type<T>[] {
   return this._createSingleBranches(undefined).map(v => v[1]);
-}
+};
 
 Impl.prototype.valuesWithFullPaths = function <T>(): JSObject<T> {
   let separator = this.substateSeparator;
@@ -236,4 +236,4 @@ Impl.prototype.valuesWithFullPaths = function <T>(): JSObject<T> {
     .reduce((acc, v) => Object.assign(acc, v), {});
 
   return Object.assign(substateValues, this.values);
-}
+};

@@ -90,7 +90,7 @@ Impl.prototype.updatingValue = function <T>(id: string, value: Nullable<T>): Typ
   };
 
   return this.mappingValue(id, updateFn);
-}
+};
 
 Impl.prototype.updatingKeyValues = function <T>(values: JSObject<T>): Type<T> {
   let state = this.cloneBuilder().build();
@@ -100,20 +100,20 @@ Impl.prototype.updatingKeyValues = function <T>(values: JSObject<T>): Type<T> {
   });
 
   return state;
-}
+};
 
 Impl.prototype.removingValue = function <T>(id: string): Type<T> {
   return this.updatingValue(id, undefined);
-}
+};
 
 Impl.prototype.copyingValue = function <T>(src: string, dest: string): Type<T> {
   let sourceValue = this.valueAtNode(src);
   return this.updatingValue(dest, sourceValue.value);
-}
+};
 
 Impl.prototype.movingValue = function <T>(src: string, dest: string): Type<T> {
   return this.copyingValue(src, dest).removingValue(src);
-}
+};
 
 Impl.prototype.updatingSubstate = function <T>(id: string, ss: Nullable<Type<T>>): Type<T> {
   let separator = this.substateSeparator;
@@ -135,21 +135,21 @@ Impl.prototype.updatingSubstate = function <T>(id: string, ss: Nullable<Type<T>>
       .zipWith(first, (v1, v2) => this.updatingSubstate(v2, v1))
       .getOrElse(this);
   }
-}
+};
 
 Impl.prototype.removingSubstate = function <T>(id: string): Type<T> {
   return this.updatingSubstate(id, undefined);
-}
+};
 
 Impl.prototype.copyingSubstate = function <T>(src: string, dest: string): Type<T> {
   let sourceSubstate = this.substateAtNode(src);
   return this.updatingSubstate(dest, sourceSubstate.value);
-}
+};
 
 Impl.prototype.movingSubstate = function <T>(src: string, dest: string): Type<T> {
   return this.copyingSubstate(src, dest).removingSubstate(src);
-}
+};
 
 Impl.prototype.emptying = function <T>(): Type<T> {
   return empty();
-}
+};

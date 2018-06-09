@@ -44,7 +44,7 @@ Impl.prototype.mappingValue = function <T>(id: string, fn: UpdateFn<T>): Type<T>
       })
       .getOrElse(this);
   }
-}
+};
 
 Impl.prototype.mappingEach = function <T, R>(selector: MapFn<T, R>): Type<R> {
   let separator = this.substateSeparator;
@@ -59,4 +59,4 @@ Impl.prototype.mappingEach = function <T, R>(selector: MapFn<T, R>): Type<R> {
   });
 
   return state;
-}
+};
