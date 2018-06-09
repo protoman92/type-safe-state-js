@@ -98,7 +98,7 @@ Impl.prototype.equals = function (object: Nullable<StateType<any>>): boolean {
   } else {
     return false;
   }
-}
+};
 
 Impl.prototype.equalsForValues = function <T>(
   state: Nullable<StateType<T>>,
@@ -111,8 +111,13 @@ Impl.prototype.equalsForValues = function <T>(
   let parsedState = fromKeyValue(state);
 
   for (let key of keys) {
-    if (!parsedState.valueAtNode(key)
-      .zipWith(this.valueAtNode(key), (v1, v2) => compareFn(v1, v2))
+    let lhsValue = this.valueAtNode(key);
+    let rhsValue = parsedState.valueAtNode(key);
+
+    if (lhsValue.isFailure() === rhsValue.isFailure()) {
+      continue;
+    } else if (!lhsValue
+      .zipWith(rhsValue, (v1, v2) => compareFn(v1, v2))
       .getOrElse(false)
     ) {
       return false;
@@ -120,7 +125,7 @@ Impl.prototype.equalsForValues = function <T>(
   }
 
   return true;
-}
+};
 
 Impl.prototype.equalsForSubstates = function <T>(
   state: Nullable<StateType<T>>,
@@ -133,8 +138,13 @@ Impl.prototype.equalsForSubstates = function <T>(
   let parsedState = fromKeyValue(state);
 
   for (let key of keys) {
-    if (!parsedState.substateAtNode(key)
-      .zipWith(this.substateAtNode(key), (v1, v2) => compareFn(v1, v2))
+    let lhsValue = this.substateAtNode(key);
+    let rhsValue = parsedState.substateAtNode(key);
+
+    if (lhsValue.isFailure() === rhsValue.isFailure()) {
+      continue;
+    } else if (!lhsValue
+      .zipWith(rhsValue, (v1, v2) => compareFn(v1, v2))
       .getOrElse(false)
     ) {
       return false;
@@ -142,4 +152,4 @@ Impl.prototype.equalsForSubstates = function <T>(
   }
 
   return true;
-}
+};

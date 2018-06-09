@@ -286,8 +286,9 @@ describe('State should be implemented correctly - variable tests', () => {
     for (let i of Numbers.range(2, maxLevel)) {
       /// Setup
       let levels = createLevels(i);
+      let allKeys = createAllKeys(levels, countPerLevel);
 
-      let substateKeys = createAllKeys(levels, countPerLevel).map(v => {
+      let substateKeys = allKeys.map(v => {
         return v.split('.').reverse().slice(1).reverse().join('.');
       });
 
@@ -306,6 +307,8 @@ describe('State should be implemented correctly - variable tests', () => {
         expect(clonedSubstate.value).toEqual(originalSubstate.value);
       }
 
+      expect(clonedState.equalsForSubstates(state, allKeys)).toBeTruthy();
+      expect(clonedState.equalsForSubstates(state, allKeys, deepEqual)).toBeTruthy();
       expect(clonedState.equalsForSubstates(state, substateKeys)).toBeTruthy();
       expect(clonedState.equalsForSubstates(state, substateKeys, deepEqual)).toBeTruthy();
     }
@@ -316,6 +319,7 @@ describe('State should be implemented correctly - variable tests', () => {
       /// Setup
       let levels = createLevels(i);
       let allKeys = createAllKeys(levels, countPerLevel);
+      let allWrongKeys = allKeys.map(v => `${v}.wrongkey`);
       let allCombinations = createCombinations(levels, countPerLevel);
       let state = createState(allCombinations);
 
@@ -331,6 +335,8 @@ describe('State should be implemented correctly - variable tests', () => {
         expect(clonedValue.value).toEqual(originalValue.value);
       }
 
+      expect(clonedState.equalsForValues(state, allWrongKeys)).toBeTruthy();
+      expect(clonedState.equalsForValues(state, allWrongKeys, deepEqual)).toBeTruthy();
       expect(clonedState.equalsForValues(state, allKeys)).toBeTruthy();
       expect(clonedState.equalsForValues(state, allKeys, (v1, v2) => v1 === v2)).toBeTruthy();
     }
