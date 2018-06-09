@@ -1,3 +1,3 @@
-import * as State from './State';
-import { StateType } from './State';
-export { State, StateType };
+import * as State from './export';
+export { State };
+export { StateType } from './state+main';
