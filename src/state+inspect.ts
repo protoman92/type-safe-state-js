@@ -258,9 +258,9 @@ Impl.prototype.valuesWithFullPaths = function<T>(): JSObject<T> {
   let separator = this.substateSeparator;
 
   let substateValues = Objects.entries(this.substate)
-    .map(v => {
-      let mainKey = v[0];
-      let values = v[1].valuesWithFullPaths();
+    .filter(([_key, substate]) => substate !== undefined && substate !== null)
+    .map(([mainKey, substate]) => {
+      let values = substate!.valuesWithFullPaths();
       let valueKeys = Object.keys(values);
 
       return valueKeys
