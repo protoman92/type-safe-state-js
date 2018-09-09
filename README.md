@@ -81,7 +81,7 @@ The above call will access the value at key **'e'** of substate **'a.b.c.d'**.
 In order to update the value at some node, call:
 
 ```typescript
-state.updatingValue(string, Nullable<any>);
+state.updatingValue(string, Never<any>);
 ```
 
 The State object will update the value at that node, and if necessary create new substates along the way.

@@ -1,4 +1,4 @@
-import { Nullable } from 'javascriptutilities';
+import { Never } from 'javascriptutilities';
 import { Impl, StateType, Type } from './state+main';
 import { fromKeyValue } from './state+utility';
 
@@ -9,31 +9,31 @@ declare module './state+main' {
      * @param {StateType<JSObject<any>>} object A JSObject instance.
      * @returns {boolean} A boolean value.
      */
-    equals(state: Nullable<StateType<T>>): boolean;
+    equals(state: Never<StateType<T>>): boolean;
 
     /**
      * Check if two State are equal in values for the specified keys.
-     * @param {Nullable<StateType<T>>} state A StateType instance.
+     * @param {Never<StateType<T>>} state A StateType instance.
      * @param {string[]} keys An Array of keys.
      * @param {(v1: T, v2: T) => boolean} [equalFn] Optional compare function.
      * @returns {boolean} A boolean value.
      */
     equalsForValues(
-      state: Nullable<StateType<T>>,
+      state: Never<StateType<T>>,
       keys: string[],
       equalFn?: (v1: T, v2: T) => boolean,
     ): boolean;
 
     /**
      * Check if two State are equal in substates for the specified keys.
-     * @param {Nullable<StateType<T>>} state A StateType instance.
+     * @param {Never<StateType<T>>} state A StateType instance.
      * @param {string[]} keys An Array of keys.
      * @param {(v1: Type<T>, v2: Type<T>) => boolean} [equalFn] Optional compare
      * function.
      * @returns {boolean} A boolean value.
      */
     equalsForSubstates(
-      state: Nullable<StateType<T>>,
+      state: Never<StateType<T>>,
       keys: string[],
       equalFn?: (v1: Type<T>, v2: Type<T>) => boolean,
     ): boolean;
@@ -42,7 +42,7 @@ declare module './state+main' {
   export interface Impl<T> extends Type<T> { }
 }
 
-Impl.prototype.equals = function (object: Nullable<StateType<any>>): boolean {
+Impl.prototype.equals = function (object: Never<StateType<any>>): boolean {
   if (object !== undefined && object !== null) {
     let state = fromKeyValue(object);
     let thisValues = this._values;
@@ -101,7 +101,7 @@ Impl.prototype.equals = function (object: Nullable<StateType<any>>): boolean {
 };
 
 Impl.prototype.equalsForValues = function <T>(
-  state: Nullable<StateType<T>>,
+  state: Never<StateType<T>>,
   keys: string[],
   equalFn?: (v1: T, v2: T) => boolean,
 ): boolean {
@@ -128,7 +128,7 @@ Impl.prototype.equalsForValues = function <T>(
 };
 
 Impl.prototype.equalsForSubstates = function <T>(
-  state: Nullable<StateType<T>>,
+  state: Never<StateType<T>>,
   keys: string[],
   equalFn?: (v1: Type<T>, v2: Type<T>) => boolean,
 ): boolean {

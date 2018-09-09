@@ -2,7 +2,7 @@ import {
   BuildableType,
   BuilderType,
   JSObject,
-  Nullable,
+  Never,
   Objects,
   Try,
   TryResult,
@@ -81,17 +81,17 @@ export class Impl<T> implements Type<T> {
    * @param {Values<T>} values A Values instance.
    * @returns {this} The current State instance.
    */
-  public setValues(values: Nullable<Values<T>>): this {
+  public setValues(values: Never<Values<T>>): this {
     this._values = values || {};
     return this;
   }
 
   /**
    * Set the current substates.
-   * @param {Nullable<Substate<T>>} substate A Substate instance.
+   * @param {Never<Substate<T>>} substate A Substate instance.
    * @returns {this} The current State instance.
    */
-  public setSubstates(substate: Nullable<Substate<T>>): this {
+  public setSubstates(substate: Never<Substate<T>>): this {
     this._substate = substate || {};
     return this;
   }
@@ -169,20 +169,20 @@ export class Builder<T> implements BuilderType<Type<T>> {
 
   /**
    * Replace the current state values.
-   * @param {Nullable<Values<T>>} values A Values instance.
+   * @param {Never<Values<T>>} values A Values instance.
    * @returns {this} The current Builder instance.
    */
-  public withValues(values: Nullable<Values<T>>): this {
+  public withValues(values: Never<Values<T>>): this {
     this.state.setValues(values);
     return this;
   }
 
   /**
    * Replace the current substate.
-   * @param {Nullable<Substate<T>>} substate A Substate instance.
+   * @param {Never<Substate<T>>} substate A Substate instance.
    * @returns {this} The current Builder instance.
    */
-  public withSubstate(substate: Nullable<Substate<T>>): this {
+  public withSubstate(substate: Never<Substate<T>>): this {
     this.state.setSubstates(substate);
     return this;
   }
@@ -218,10 +218,10 @@ export class Builder<T> implements BuilderType<Type<T>> {
   /**
    * Update the current state with some value, ignoring the old value.
    * @param {string} id A string value.
-   * @param {Nullable<T>} value T object.
+   * @param {Never<T>} value T object.
    * @returns {this} The current Builder instance.
    */
-  public updateValue(id: string, value: Nullable<T>): this {
+  public updateValue(id: string, value: Never<T>): this {
     let updateFn: UpdateFn<T> = () => {
       return Try.unwrap(value, `No value found at ${id}`);
     };
@@ -232,10 +232,10 @@ export class Builder<T> implements BuilderType<Type<T>> {
   /**
    * Update the current substates with some substate, ignoring the old substate.
    * @param {string} id A string value.
-   * @param {Nullable<Type<T>>} ss A Type instance.
+   * @param {Never<Type<T>>} ss A Type instance.
    * @returns {this} The current Builder instance.
    */
-  public updateSubstate(id: string, ss: Nullable<Type<T>>): this {
+  public updateSubstate(id: string, ss: Never<Type<T>>): this {
     if (ss !== undefined && ss !== null) {
       this.state.setSubstate(id, ss);
     } else {
@@ -247,10 +247,10 @@ export class Builder<T> implements BuilderType<Type<T>> {
 
   /**
    * Copy the properties from a state to the current state.
-   * @param {Nullable<Type<T>>} buildable A Type instance.
+   * @param {Never<Type<T>>} buildable A Type instance.
    * @returns {this} The current Builder instance.
    */
-  public withBuildable(buildable: Nullable<Type<T>>): this {
+  public withBuildable(buildable: Never<Type<T>>): this {
     if (buildable !== undefined && buildable !== null) {
       return this
         .withValues(buildable.values)

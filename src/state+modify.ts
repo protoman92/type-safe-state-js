@@ -1,4 +1,4 @@
-import { Collections, JSObject, Nullable, Objects, Try } from 'javascriptutilities';
+import { Collections, JSObject, Never, Objects, Try } from 'javascriptutilities';
 import { Impl, Type, UpdateFn } from './state+main';
 import { empty } from './state+utility';
 
@@ -7,10 +7,10 @@ declare module './state+main' {
     /**
      * Update the value at some node, ignoring the old value.
      * @param {string} id A string value.
-     * @param {Nullable<T>} value T object.
+     * @param {Never<T>} value T object.
      * @returns {Type} A Type instance.
      */
-    updatingValue(id: string, value: Nullable<T>): Type<T>;
+    updatingValue(id: string, value: Never<T>): Type<T>;
 
     /**
      * Copy value from one node to another.
@@ -46,10 +46,10 @@ declare module './state+main' {
      * Update the substate at some node with another substate, ignoring the old
      * substate.
      * @param {string} id A string value.
-     * @param {Nullable<Type<T>>} ss A Type instance.
+     * @param {Never<Type<T>>} ss A Type instance.
      * @returns {Type<T>} A Type instance.
      */
-    updatingSubstate(id: string, ss: Nullable<Type<T>>): Type<T>;
+    updatingSubstate(id: string, ss: Never<Type<T>>): Type<T>;
 
     /**
      * Remove the substate at some node.
@@ -84,7 +84,7 @@ declare module './state+main' {
   export interface Impl<T> extends Type<T> { }
 }
 
-Impl.prototype.updatingValue = function <T>(id: string, value: Nullable<T>): Type<T> {
+Impl.prototype.updatingValue = function <T>(id: string, value: Never<T>): Type<T> {
   let updateFn: UpdateFn<T> = () => {
     return Try.unwrap(value, `No value found at ${id}`);
   };
@@ -115,7 +115,7 @@ Impl.prototype.movingValue = function <T>(src: string, dest: string): Type<T> {
   return this.copyingValue(src, dest).removingValue(src);
 };
 
-Impl.prototype.updatingSubstate = function <T>(id: string, ss: Nullable<Type<T>>): Type<T> {
+Impl.prototype.updatingSubstate = function <T>(id: string, ss: Never<Type<T>>): Type<T> {
   let separator = this.substateSeparator;
   let separated = id.split(separator);
   let length = separated.length;

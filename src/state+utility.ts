@@ -1,4 +1,4 @@
-import { Collections, Nullable, Objects, Types } from 'javascriptutilities';
+import { Collections, Never, Objects, Types } from 'javascriptutilities';
 import { Builder, Impl, StateType, Type, valuesKey, substateKey } from './state+main';
 
 /**
@@ -35,10 +35,10 @@ export function empty<T>(): Type<T> {
 /**
  * Build a state from another state.
  * @template T Generics parameter.
- * @param {Nullable<Type<T>>} state A Type instance.
+ * @param {Never<Type<T>>} state A Type instance.
  * @returns {Type<T>} A Type instance.
  */
-export function fromState<T>(state: Nullable<Type<T>>): Type<T> {
+export function fromState<T>(state: Never<Type<T>>): Type<T> {
   if (state === undefined || state === null) {
     return empty<T>();
   } if (state instanceof Impl) {
@@ -57,10 +57,10 @@ export function fromState<T>(state: Nullable<Type<T>>): Type<T> {
 
 /**
  * Build a state from a possible state.
- * @param {Nullable<StateType<any>>} state A StateType instance.
+ * @param {Never<StateType<any>>} state A StateType instance.
  * @returns {Type<T>} A Type instance.
  */
-export function fromKeyValue(state: Nullable<StateType<any>>): Type<any> {
+export function fromKeyValue(state: Never<StateType<any>>): Type<any> {
   if (state === undefined || state === null) {
     return empty<any>();
   } if (Types.isInstance<Type<any>>(state, 'values', 'substate')) {
