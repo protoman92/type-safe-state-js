@@ -1,4 +1,4 @@
-import { State } from './../src';
+import {State} from './../src';
 
 describe('Nominal state tests', () => {
   it('Accessing substate/value with empty id - should work correctly', () => {
@@ -14,17 +14,19 @@ describe('Nominal state tests', () => {
     /// Setup
     let state = State.fromKeyValue({
       [State.substateKey]: {},
-      [State.valuesKey]: { a: 1, b: 2, c: 3 },
+      [State.valuesKey]: {a: 1, b: 2, c: 3},
     });
 
     /// When && Then
     let substate1 = State.fromKeyValue({
       [State.substateKey]: {},
-      [State.valuesKey]: { d: 4, e: 5, f: 6 },
+      [State.valuesKey]: {d: 4, e: 5, f: 6},
     });
 
     state = state.updatingSubstate('', substate1);
-    expect(state.substateAtNode('').value!.flatten()).toEqual(substate1.flatten());
+    expect(state.substateAtNode('').value!.flatten()).toEqual(
+      substate1.flatten()
+    );
 
     let substate2 = substate1.cloneBuilder().build();
     state = state.updatingSubstate('non.existent.key', substate2);
@@ -39,14 +41,14 @@ describe('Nominal state tests', () => {
           [State.substateKey]: {
             b: {
               [State.substateKey]: {},
-              [State.valuesKey]: { b1: 1, b2: 2, b3: 3 },
+              [State.valuesKey]: {b1: 1, b2: 2, b3: 3},
             },
           },
-          [State.valuesKey]: { a1: 1, a2: 2, a3: 3 },
+          [State.valuesKey]: {a1: 1, a2: 2, a3: 3},
         },
         b: {
           [State.substateKey]: {},
-          [State.valuesKey]: { b1: 1, b2: 2, b3: 3 },
+          [State.valuesKey]: {b1: 1, b2: 2, b3: 3},
         },
       },
       [State.valuesKey]: {},
@@ -60,8 +62,10 @@ describe('Nominal state tests', () => {
   });
 });
 
-describe('State\'s instanceAtNode should be implemented correctly', () => {
-  class A { constructor() { } }
+describe("State's instanceAtNode should be implemented correctly", () => {
+  class A {
+    constructor() {}
+  }
 
   let state = State.empty<A>()
     .updatingValue('1.2.3', new A())
@@ -79,10 +83,10 @@ describe('State\'s instanceAtNode should be implemented correctly', () => {
 describe('State construction should be implemented correctly', () => {
   it('State.fromState with undefined state - should work correctly', () => {
     /// Setup
-    let state1: State.Type<any> = (({
+    let state1: State.Type<any> = ({
       values: undefined,
       substate: undefined,
-    }) as any) as State.Type<any>;
+    } as any) as State.Type<any>;
 
     /// When
     let result = State.fromState(state1);
@@ -95,10 +99,10 @@ describe('State construction should be implemented correctly', () => {
     /// Setup
     let state1 = undefined;
 
-    let state2: State.Type<any> = (({
+    let state2: State.Type<any> = ({
       values: undefined,
       substate: undefined,
-    }) as any) as State.Type<any>;
+    } as any) as State.Type<any>;
 
     /// When
     let result1 = State.fromKeyValue(state1);

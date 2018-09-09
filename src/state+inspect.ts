@@ -1,12 +1,6 @@
-import {
-  Collections,
-  JSObject,
-  Never,
-  Objects,
-  Try
-} from 'javascriptutilities';
-import { ForEach, Impl, Type, valuesKey, substateKey } from './state+main';
-import { empty, fromState } from './state+utility';
+import {Collections, JSObject, Never, Objects, Try} from 'javascriptutilities';
+import {ForEach, Impl, Type, valuesKey, substateKey} from './state+main';
+import {empty, fromState} from './state+utility';
 
 declare module './state+main' {
   export interface Type<T> {
@@ -144,10 +138,10 @@ Impl.prototype.totalValueCount = function(): number {
 
 Impl.prototype.flatten = function(): JSObject<any> {
   let substates = Objects.entries(this._substate)
-    .map(v => ({ [v[0]]: Try.unwrap(v[1]).map(v1 => v1.flatten()).value }))
+    .map(v => ({[v[0]]: Try.unwrap(v[1]).map(v1 => v1.flatten()).value}))
     .reduce((v1, v2) => Object.assign({}, v1, v2), {});
 
-  return { [valuesKey]: this._values, [substateKey]: substates };
+  return {[valuesKey]: this._values, [substateKey]: substates};
 };
 
 Impl.prototype._forEach = function<T>(
@@ -197,7 +191,7 @@ Impl.prototype.valuesForMatchingPaths = function<T>(
 
   return Object.keys(keyValues)
     .filter(v => pathMatcher(v))
-    .map(v => ({ [v]: keyValues[v] }))
+    .map(v => ({[v]: keyValues[v]}))
     .reduce((acc, v) => Object.assign(acc, v), {});
 };
 
@@ -224,7 +218,7 @@ Impl.prototype._createSingleBranches = function<T>(
               (v2): [string, Impl<T>] => {
                 return [
                   v1[0],
-                  <Impl<T>>empty<T>().updatingSubstate(v2[0], v2[1])
+                  <Impl<T>>empty<T>().updatingSubstate(v2[0], v2[1]),
                 ];
               }
             );
@@ -270,7 +264,7 @@ Impl.prototype.valuesWithFullPaths = function<T>(): JSObject<T> {
       let valueKeys = Object.keys(values);
 
       return valueKeys
-        .map(v1 => ({ [`${mainKey}${separator}${v1}`]: values[v1] }))
+        .map(v1 => ({[`${mainKey}${separator}${v1}`]: values[v1]}))
         .reduce((acc, v1) => Object.assign(acc, v1), {});
     })
     .reduce((acc, v) => Object.assign(acc, v), {});

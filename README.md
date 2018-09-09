@@ -5,7 +5,7 @@
 [![Build Status](https://travis-ci.org/protoman92/type-safe-state-js.svg?branch=master&dummy=false)](https://travis-ci.org/protoman92/type-safe-state-js?dummy=false)
 [![Coverage Status](https://coveralls.io/repos/github/protoman92/type-safe-state-js/badge.svg?branch=master&dummy=false)](https://coveralls.io/github/protoman92/type-safe-state-js?branch=master&dummy=false)
 
-### REACT NATIVE USERS, PLEASE READ THIS FIRST: ###
+### REACT NATIVE USERS, PLEASE READ THIS FIRST:
 
 Since React Native only allows the state to be a normal key-value object, using this State will lead to errors when we call **setState** on a Component:
 
@@ -21,16 +21,16 @@ class App extends Component<Props.Type, StateType<any>> {
   public constructor(props: Props.Type) {
     super(props);
   }
-  
+
   private operationThatAccessesState(): void {
     let a = State.fromKeyValue(this.state).valueAtNode('a.b.c.d');
     ...
   }
-  
+
   private operationThatSetsState(state: State.Self<any>): void {
     this.setState(this.convertStateForPlatform(state));
   }
-  
+
   private convertStateForPlatform(state: State.Self<any>): StateType<any> {
     return this.platform === REACT_NATIVE ? state.flatten() : state;
   }
@@ -40,7 +40,7 @@ class App extends Component<Props.Type, StateType<any>> {
 Since **StateType** is defined as:
 
 ```typescript
-type StateType<T> = State.Type<T> | { [key: string] : T };
+type StateType<T> = State.Type<T> | {[key: string]: T};
 ```
 
 Or as written in the source code:
@@ -58,7 +58,7 @@ Functional, type-safe nested state object that can be used for (but not limited 
 To use this State:
 
 ```typescript
-import { State } from 'type-safe-state-js';
+import {State} from 'type-safe-state-js';
 
 /// Note that we only expose the state interface for better encapsulation.
 let state: State.Type<any> = State.empty<any>();

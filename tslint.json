@@ -8,13 +8,15 @@
     "no-var-requires": true,
     "typedef": [false],
     "typedef-whitespace": [
-      true, {
+      true,
+      {
         "call-signature": "nospace",
         "index-signature": "nospace",
         "parameter": "nospace",
         "property-declaration": "nospace",
         "variable-declaration": "nospace"
-      }, {
+      },
+      {
         "call-signature": "space",
         "index-signature": "space",
         "parameter": "space",
@@ -29,14 +31,7 @@
     "no-arg": true,
     "no-bitwise": true,
     "no-conditional-assignment": true,
-    "no-console": [
-      true,
-      "debug",
-      "info",
-      "time",
-      "timeEnd",
-      "trace"
-    ],
+    "no-console": [true, "debug", "info", "time", "timeEnd", "trace"],
     "no-construct": true,
     "no-debugger": true,
     "no-duplicate-variable": true,
@@ -51,34 +46,23 @@
     "no-var-keyword": true,
     "radix": true,
     "switch-default": true,
-    "triple-equals": [
-      true,
-      "allow-undefined-check"
-    ],
+    "triple-equals": [true, "allow-undefined-check"],
     "eofline": false,
-    "indent": [
-      true,
-      "spaces"
-    ],
-    "max-line-length": [
-      true,
-      150
-    ],
+    "indent": [true, "spaces"],
+    "max-line-length": [true, 150],
     "no-require-imports": false,
     "no-trailing-whitespace": true,
     "object-literal-sort-keys": false,
     "trailing-comma": [
-      true, {
+      true,
+      {
         "multiline": true,
         "singleline": true
       }
     ],
     "align": [true],
     "class-name": true,
-    "comment-format": [
-      true,
-      "check-space"
-    ],
+    "comment-format": [true, "check-space"],
     "interface-name": [false],
     "jsdoc-format": true,
     "no-consecutive-blank-lines": [true],
@@ -91,11 +75,7 @@
       "check-finally",
       "check-whitespace"
     ],
-    "quotemark": [
-      true,
-      "single",
-      "avoid-escape"
-    ],
+    "quotemark": [true, "single", "avoid-escape"],
     "semicolon": true,
     "variable-name": [
       true,

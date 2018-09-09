@@ -1,6 +1,6 @@
-import { Collections, JSObject, Never, Objects, Try } from 'javascriptutilities';
-import { Impl, Type, UpdateFn } from './state+main';
-import { empty } from './state+utility';
+import {Collections, JSObject, Never, Objects, Try} from 'javascriptutilities';
+import {Impl, Type, UpdateFn} from './state+main';
+import {empty} from './state+utility';
 
 declare module './state+main' {
   export interface Type<T> {
@@ -81,10 +81,13 @@ declare module './state+main' {
     emptying(): Type<T>;
   }
 
-  export interface Impl<T> extends Type<T> { }
+  export interface Impl<T> extends Type<T> {}
 }
 
-Impl.prototype.updatingValue = function <T>(id: string, value: Never<T>): Type<T> {
+Impl.prototype.updatingValue = function<T>(
+  id: string,
+  value: Never<T>
+): Type<T> {
   let updateFn: UpdateFn<T> = () => {
     return Try.unwrap(value, `No value found at ${id}`);
   };
@@ -92,30 +95,33 @@ Impl.prototype.updatingValue = function <T>(id: string, value: Never<T>): Type<T
   return this.mappingValue(id, updateFn);
 };
 
-Impl.prototype.updatingKeyValues = function <T>(values: JSObject<T>): Type<T> {
+Impl.prototype.updatingKeyValues = function<T>(values: JSObject<T>): Type<T> {
   let state = this.cloneBuilder().build();
 
-  Objects.entries(values || {}).forEach((v) => {
+  Objects.entries(values || {}).forEach(v => {
     state = state.updatingValue(v[0], v[1]);
   });
 
   return state;
 };
 
-Impl.prototype.removingValue = function <T>(id: string): Type<T> {
+Impl.prototype.removingValue = function<T>(id: string): Type<T> {
   return this.updatingValue(id, undefined);
 };
 
-Impl.prototype.copyingValue = function <T>(src: string, dest: string): Type<T> {
+Impl.prototype.copyingValue = function<T>(src: string, dest: string): Type<T> {
   let sourceValue = this.valueAtNode(src);
   return this.updatingValue(dest, sourceValue.value);
 };
 
-Impl.prototype.movingValue = function <T>(src: string, dest: string): Type<T> {
+Impl.prototype.movingValue = function<T>(src: string, dest: string): Type<T> {
   return this.copyingValue(src, dest).removingValue(src);
 };
 
-Impl.prototype.updatingSubstate = function <T>(id: string, ss: Never<Type<T>>): Type<T> {
+Impl.prototype.updatingSubstate = function<T>(
+  id: string,
+  ss: Never<Type<T>>
+): Type<T> {
   let separator = this.substateSeparator;
   let separated = id.split(separator);
   let length = separated.length;
@@ -123,7 +129,11 @@ Impl.prototype.updatingSubstate = function <T>(id: string, ss: Never<Type<T>>): 
 
   if (length === 1) {
     return first
-      .map(v => this.cloneBuilder().updateSubstate(v, ss).build())
+      .map(v =>
+        this.cloneBuilder()
+          .updateSubstate(v, ss)
+          .build()
+      )
       .getOrElse(this);
   } else {
     let subId = Try.evaluate(() => separated.slice(1, length).join(separator));
@@ -137,19 +147,25 @@ Impl.prototype.updatingSubstate = function <T>(id: string, ss: Never<Type<T>>): 
   }
 };
 
-Impl.prototype.removingSubstate = function <T>(id: string): Type<T> {
+Impl.prototype.removingSubstate = function<T>(id: string): Type<T> {
   return this.updatingSubstate(id, undefined);
 };
 
-Impl.prototype.copyingSubstate = function <T>(src: string, dest: string): Type<T> {
+Impl.prototype.copyingSubstate = function<T>(
+  src: string,
+  dest: string
+): Type<T> {
   let sourceSubstate = this.substateAtNode(src);
   return this.updatingSubstate(dest, sourceSubstate.value);
 };
 
-Impl.prototype.movingSubstate = function <T>(src: string, dest: string): Type<T> {
+Impl.prototype.movingSubstate = function<T>(
+  src: string,
+  dest: string
+): Type<T> {
   return this.copyingSubstate(src, dest).removingSubstate(src);
 };
 
-Impl.prototype.emptying = function <T>(): Type<T> {
+Impl.prototype.emptying = function<T>(): Type<T> {
   return empty();
 };

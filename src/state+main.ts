@@ -8,7 +8,7 @@ import {
   TryResult,
 } from 'javascriptutilities';
 
-import { builder } from './state+utility';
+import {builder} from './state+utility';
 
 export type UpdateFn<T> = (v: Try<T>) => TryResult<T>;
 export type Values<T> = JSObject<T>;
@@ -20,7 +20,7 @@ export type ForEach<T> = (
   k: string,
   value: Try<T>,
   substatePath: Try<string>,
-  level: number,
+  level: number
 ) => void;
 
 export let valuesKey = 'values';
@@ -127,7 +127,7 @@ export class Impl<T> implements Type<T> {
     let entries = Objects.entries(oldValues).filter(v => v[0] !== key);
 
     this._values = entries
-      .map(v => ({ [v[0]]: v[1] }))
+      .map(v => ({[v[0]]: v[1]}))
       .reduce((v1, v2) => Object.assign({}, v1, v2), {});
 
     return this;
@@ -153,7 +153,8 @@ export class Impl<T> implements Type<T> {
     let oldSS = this._substate;
     let entries = Objects.entries(oldSS).filter(v => v[0] !== key);
 
-    this._substate = entries.map(v => ({ [v[0]]: v[1] }))
+    this._substate = entries
+      .map(v => ({[v[0]]: v[1]}))
       .reduce((v1, v2) => Object.assign({}, v1, v2), {});
 
     return this;
@@ -252,8 +253,7 @@ export class Builder<T> implements BuilderType<Type<T>> {
    */
   public withBuildable(buildable: Never<Type<T>>): this {
     if (buildable !== undefined && buildable !== null) {
-      return this
-        .withValues(buildable.values)
+      return this.withValues(buildable.values)
         .withSubstate(buildable.substate)
         .withSubstateSeparator(buildable.substateSeparator);
     } else {

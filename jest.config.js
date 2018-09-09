@@ -1,20 +1,10 @@
 module.exports = {
-  roots: [
-    "<rootDir>",
-    "<rootDir>/src",
-  ],
-  "transform": {
-    "^.+\\.tsx?$": "ts-jest"
+  roots: ['<rootDir>', '<rootDir>/src'],
+  transform: {
+    '^.+\\.tsx?$': 'ts-jest',
   },
-  testRegex: "/test/.*.(test|spec)\\.tsx?$",
+  testRegex: '/test/.*.(test|spec)\\.tsx?$',
   collectCoverage: true,
   mapCoverage: true,
-  moduleFileExtensions: [
-    "ts",
-    "tsx",
-    "js",
-    "jsx",
-    "json",
-    "node"
-  ],
-}
+  moduleFileExtensions: ['ts', 'tsx', 'js', 'jsx', 'json', 'node'],
+};

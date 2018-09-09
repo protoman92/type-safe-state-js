@@ -1,5 +1,5 @@
-import { Impl, Type } from './state+main';
-import { empty } from './state+utility';
+import {Impl, Type} from './state+main';
+import {empty} from './state+utility';
 
 declare module './state+main' {
   export interface Type<T> {
@@ -28,18 +28,25 @@ declare module './state+main' {
     cloneWithPaths(valuePaths: string[], substatePaths: string[]): Type<T>;
   }
 
-  export interface Impl<T> extends Type<T> { }
+  export interface Impl<T> extends Type<T> {}
 }
 
-Impl.prototype.cloningWithSubstatesAtNodes = function <T>(...paths: string[]): Type<T> {
+Impl.prototype.cloningWithSubstatesAtNodes = function<T>(
+  ...paths: string[]
+): Type<T> {
   return this.cloneWithPaths([], paths);
 };
 
-Impl.prototype.cloningWithValuesAtNodes = function <T>(...paths: string[]): Type<T> {
+Impl.prototype.cloningWithValuesAtNodes = function<T>(
+  ...paths: string[]
+): Type<T> {
   return this.cloneWithPaths(paths, []);
 };
 
-Impl.prototype.cloneWithPaths = function <T>(valuePaths: string[], substatePaths: string[]): Type<T> {
+Impl.prototype.cloneWithPaths = function<T>(
+  valuePaths: string[],
+  substatePaths: string[]
+): Type<T> {
   let state = empty<T>();
 
   for (let id of valuePaths) {

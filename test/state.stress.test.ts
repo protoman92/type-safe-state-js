@@ -8,7 +8,7 @@ import {
   Types,
 } from 'javascriptutilities';
 
-import { State } from './../src';
+import {State} from './../src';
 import deepEqual from 'deep-equal';
 
 let alphabets = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
@@ -34,7 +34,10 @@ function createAllKeys(levels: string[], countPerLevel: number): string[] {
   }
 }
 
-function createCombinations(levels: string[], countPerLevel: number): JSObject<number> {
+function createCombinations(
+  levels: string[],
+  countPerLevel: number
+): JSObject<number> {
   let allCombinations: JSObject<number> = {};
   let allKeys = createAllKeys(levels, countPerLevel);
 
@@ -42,12 +45,13 @@ function createCombinations(levels: string[], countPerLevel: number): JSObject<n
     let keyParts = key.split(separator);
     let keyLength = keyParts.length;
 
-    let subKeys = Numbers
-      .range(0, keyLength)
+    let subKeys = Numbers.range(0, keyLength)
       .map(v => keyParts.slice(0, v + 1))
       .map(v => v.join(separator));
 
-    subKeys.forEach(v => allCombinations[v] = Numbers.randomBetween(0, 100000));
+    subKeys.forEach(
+      v => (allCombinations[v] = Numbers.randomBetween(0, 100000))
+    );
   }
 
   return allCombinations;
@@ -105,7 +109,9 @@ describe('State should be implemented correctly - fixed tests', () => {
   it('Updating value at node - should work correctly', () => {
     for (let entry of allEntries) {
       let key = entry[0];
-      let value = Booleans.random() ? Numbers.randomBetween(0, 1000) : undefined;
+      let value = Booleans.random()
+        ? Numbers.randomBetween(0, 1000)
+        : undefined;
       let newState = initialState.updatingValue(key, value);
       let valueAtNode = newState.valueAtNode(key).value;
       expect(valueAtNode).toBe(value);
@@ -142,7 +148,7 @@ describe('State should be implemented correctly - fixed tests', () => {
 
   it('Substate equals - should work correctly', () => {
     /// Setup
-    let flattened1 = <State.Type<number>>(initialState.flatten());
+    let flattened1 = <State.Type<number>>initialState.flatten();
     let flattened2 = JSON.parse(JSON.stringify(initialState));
 
     /// When & Then
@@ -155,7 +161,9 @@ describe('State should be implemented correctly - fixed tests', () => {
     let flattened = initialState.flatten();
 
     /// When & Then
-    if (!Types.isInstance<State.Type<number>>(flattened, 'values', 'substate')) {
+    if (
+      !Types.isInstance<State.Type<number>>(flattened, 'values', 'substate')
+    ) {
       fail('Should have been of the same type');
     }
   });
@@ -289,7 +297,12 @@ describe('State should be implemented correctly - variable tests', () => {
       let allKeys = createAllKeys(levels, countPerLevel);
 
       let substateKeys = allKeys.map(v => {
-        return v.split('.').reverse().slice(1).reverse().join('.');
+        return v
+          .split('.')
+          .reverse()
+          .slice(1)
+          .reverse()
+          .join('.');
       });
 
       let allCombinations = createCombinations(levels, countPerLevel);
@@ -308,9 +321,13 @@ describe('State should be implemented correctly - variable tests', () => {
       }
 
       expect(clonedState.equalsForSubstates(state, allKeys)).toBeTruthy();
-      expect(clonedState.equalsForSubstates(state, allKeys, deepEqual)).toBeTruthy();
+      expect(
+        clonedState.equalsForSubstates(state, allKeys, deepEqual)
+      ).toBeTruthy();
       expect(clonedState.equalsForSubstates(state, substateKeys)).toBeTruthy();
-      expect(clonedState.equalsForSubstates(state, substateKeys, deepEqual)).toBeTruthy();
+      expect(
+        clonedState.equalsForSubstates(state, substateKeys, deepEqual)
+      ).toBeTruthy();
     }
   });
 
@@ -336,9 +353,13 @@ describe('State should be implemented correctly - variable tests', () => {
       }
 
       expect(clonedState.equalsForValues(state, allWrongKeys)).toBeTruthy();
-      expect(clonedState.equalsForValues(state, allWrongKeys, deepEqual)).toBeTruthy();
+      expect(
+        clonedState.equalsForValues(state, allWrongKeys, deepEqual)
+      ).toBeTruthy();
       expect(clonedState.equalsForValues(state, allKeys)).toBeTruthy();
-      expect(clonedState.equalsForValues(state, allKeys, (v1, v2) => v1 === v2)).toBeTruthy();
+      expect(
+        clonedState.equalsForValues(state, allKeys, (v1, v2) => v1 === v2)
+      ).toBeTruthy();
     }
   });
 
@@ -420,7 +441,12 @@ describe('State should be implemented correctly - variable tests', () => {
       let levels = createLevels(i);
 
       let substateKeys = createAllKeys(levels, countPerLevel).map(v => {
-        return v.split('.').reverse().slice(1).reverse().join('.');
+        return v
+          .split('.')
+          .reverse()
+          .slice(1)
+          .reverse()
+          .join('.');
       });
 
       let allCombinations = createCombinations(levels, countPerLevel);

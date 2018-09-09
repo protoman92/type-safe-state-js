@@ -1,6 +1,6 @@
-import { Never } from 'javascriptutilities';
-import { Impl, StateType, Type } from './state+main';
-import { fromKeyValue } from './state+utility';
+import {Never} from 'javascriptutilities';
+import {Impl, StateType, Type} from './state+main';
+import {fromKeyValue} from './state+utility';
 
 declare module './state+main' {
   export interface Type<T> {
@@ -21,7 +21,7 @@ declare module './state+main' {
     equalsForValues(
       state: Never<StateType<T>>,
       keys: string[],
-      equalFn?: (v1: T, v2: T) => boolean,
+      equalFn?: (v1: T, v2: T) => boolean
     ): boolean;
 
     /**
@@ -35,14 +35,14 @@ declare module './state+main' {
     equalsForSubstates(
       state: Never<StateType<T>>,
       keys: string[],
-      equalFn?: (v1: Type<T>, v2: Type<T>) => boolean,
+      equalFn?: (v1: Type<T>, v2: Type<T>) => boolean
     ): boolean;
   }
 
-  export interface Impl<T> extends Type<T> { }
+  export interface Impl<T> extends Type<T> {}
 }
 
-Impl.prototype.equals = function (object: Never<StateType<any>>): boolean {
+Impl.prototype.equals = function(object: Never<StateType<any>>): boolean {
   if (object !== undefined && object !== null) {
     let state = fromKeyValue(object);
     let thisValues = this._values;
@@ -58,8 +58,10 @@ Impl.prototype.equals = function (object: Never<StateType<any>>): boolean {
 
       try {
         if (
-          v1 !== undefined && v1 !== null &&
-          v2 !== undefined && v2 !== null &&
+          v1 !== undefined &&
+          v1 !== null &&
+          v2 !== undefined &&
+          v2 !== null &&
           v1 === v2
         ) {
           continue;
@@ -80,8 +82,10 @@ Impl.prototype.equals = function (object: Never<StateType<any>>): boolean {
       let v2 = otherSubstates[key];
 
       if (
-        v1 !== undefined && v1 !== null &&
-        v2 !== undefined && v2 !== null &&
+        v1 !== undefined &&
+        v1 !== null &&
+        v2 !== undefined &&
+        v2 !== null &&
         v1.equals(v2)
       ) {
         continue;
@@ -100,13 +104,15 @@ Impl.prototype.equals = function (object: Never<StateType<any>>): boolean {
   }
 };
 
-Impl.prototype.equalsForValues = function <T>(
+Impl.prototype.equalsForValues = function<T>(
   state: Never<StateType<T>>,
   keys: string[],
-  equalFn?: (v1: T, v2: T) => boolean,
+  equalFn?: (v1: T, v2: T) => boolean
 ): boolean {
-  let compareFn = equalFn !== undefined && equalFn !== null ? equalFn
-    : (v1: T, v2: T): boolean => v1 === v2;
+  let compareFn =
+    equalFn !== undefined && equalFn !== null
+      ? equalFn
+      : (v1: T, v2: T): boolean => v1 === v2;
 
   let parsedState = fromKeyValue(state);
 
@@ -116,9 +122,10 @@ Impl.prototype.equalsForValues = function <T>(
 
     if (lhsValue.isFailure() && rhsValue.isFailure()) {
       continue;
-    } else if (!lhsValue
-      .zipWith(rhsValue, (v1, v2) => compareFn(v1, v2))
-      .getOrElse(false)
+    } else if (
+      !lhsValue
+        .zipWith(rhsValue, (v1, v2) => compareFn(v1, v2))
+        .getOrElse(false)
     ) {
       return false;
     }
@@ -127,13 +134,15 @@ Impl.prototype.equalsForValues = function <T>(
   return true;
 };
 
-Impl.prototype.equalsForSubstates = function <T>(
+Impl.prototype.equalsForSubstates = function<T>(
   state: Never<StateType<T>>,
   keys: string[],
-  equalFn?: (v1: Type<T>, v2: Type<T>) => boolean,
+  equalFn?: (v1: Type<T>, v2: Type<T>) => boolean
 ): boolean {
-  let compareFn = equalFn !== undefined && equalFn !== null ? equalFn
-    : (v1: Type<T>, v2: Type<T>): boolean => v1.equals(v2);
+  let compareFn =
+    equalFn !== undefined && equalFn !== null
+      ? equalFn
+      : (v1: Type<T>, v2: Type<T>): boolean => v1.equals(v2);
 
   let parsedState = fromKeyValue(state);
 
@@ -143,9 +152,10 @@ Impl.prototype.equalsForSubstates = function <T>(
 
     if (lhsValue.isFailure() && rhsValue.isFailure()) {
       continue;
-    } else if (!lhsValue
-      .zipWith(rhsValue, (v1, v2) => compareFn(v1, v2))
-      .getOrElse(false)
+    } else if (
+      !lhsValue
+        .zipWith(rhsValue, (v1, v2) => compareFn(v1, v2))
+        .getOrElse(false)
     ) {
       return false;
     }

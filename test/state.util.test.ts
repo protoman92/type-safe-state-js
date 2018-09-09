@@ -1,4 +1,4 @@
-import { State } from './../src';
+import {State} from './../src';
 
 describe('Utilities tests', () => {
   it('Separate path into substate and value paths - should work correctly', () => {
